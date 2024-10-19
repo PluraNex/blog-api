@@ -16,3 +16,6 @@ venv/
 
 # Banco de dados SQLite
 blog/db.sqlite3
+
+# Configurações de produção
+blog/settings/production.py

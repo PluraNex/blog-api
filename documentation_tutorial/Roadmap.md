@@ -257,14 +257,17 @@ Crie um Script de Gerenciamento Personalizado
 
 Crie um arquivo chamado manage_env.py na raiz do projeto, com o seguinte conteúdo:
 
-instale o colorama para fazer a tela de log estilizada 
+instale o colorama para fazer a tela de log estilizada
+
 ```bash
 pip install colorama
 
 ```
+
 ![1729360709443](image/Roadmap/1729360709443.png)
 
 Crie a funcao do banner dentro de um diretorio utils
+
 ```python
 import os
 from colorama import Fore, Style, init
@@ -284,7 +287,7 @@ def print_banner(env):
         -------------------------------------------------
         """
         print(banner)
-        
+  
         # Configurações de cores e ícones para ambientes específicos
         color = Fore.CYAN if env == "development" else Fore.RED if env == "production" else Fore.YELLOW
         icon = "🛠️" if env == "development" else "🚀" if env == "production" else "🧪"
@@ -308,7 +311,7 @@ from utils.banner import print_banner
 if __name__ == "__main__":
     # Definir qual ambiente usar
     env = sys.argv[1] if len(sys.argv) > 1 else "development"
-    
+  
     # Garantir que o ambiente não seja um comando do Django
     if env in ["runserver", "migrate", "createsuperuser", "shell", "makemigrations"]:
         env = "development"
@@ -357,15 +360,103 @@ python manage_env.py production migrate
 ```
 
 </details>
+<details>
+<summary>4. Configuração do Banco de Dados na AWS (PostgreSQL)</summary>
+
+## Descrição
+
+Esta seção explica como configurar o banco de dados PostgreSQL na AWS para uso em produção ou ambientes de teste. Vamos usar o Amazon RDS para configurar uma instância PostgreSQL segura e escalável.
+
+### Passos:
+
+1. **Criar Instância no Amazon RDS**
+
+   - Acesse o [AWS Management Console](https://aws.amazon.com/console/) e selecione "RDS" no menu de serviços.
+   - Clique em "Create database".
+   - Escolha o "Standard Create" e selecione "PostgreSQL" como o mecanismo de banco de dados.
+     ![1729364159243](image.png)
+
+   **Configurações básicas:**
+
+   - **Engine version**: Escolha uma versão compatível com o seu projeto, como PostgreSQL.
+     ![1729364246641](image/Roadmap/1729364246641.png)
+   - **Template**: Selecione "Free Tier" se estiver testando ou uma das opções pagas para produção.
+     ![1729364308551](image/Roadmap/1729364308551.png)
+   - **DB instance identifier**: Dê um nome para sua instância, como `blog-api-db`.
+   - **Master username**: `postgres` (ou um nome de usuário de sua escolha).
+   - **Master password**: Defina uma senha segura e armazene-a para uso posterior.
+
+   ![1729364664829](image/Roadmap/1729364664829.png)![alt text](image-1.png)
+
+   **Configurações avançadas:**
+
+   - **Instance class**: Escolha uma classe apropriada. T3.micro é uma opção acessível para testes.
+   - **Storage**: Escolha o tamanho inicial de armazenamento, como 20 GB, e habilite a opção "Auto Scaling" se desejar.![1729364801104](image/Roadmap/1729364801104.png)
+   - **VPC**: Certifique-se de que a instância esteja em uma VPC onde seus outros serviços possam acessá-la.
+   - **Public Access**: Defina como "Yes" se deseja permitir conexões externas (garanta que as regras de segurança estejam configuradas para limitar o acesso).
+
+     ![1729365003531](image/Roadmap/1729365003531.png)
+2. **Configurar Regras de Segurança**
+
+   - Após criar a instância, vá para "Security Groups" no console de RDS.
+   - Edite ou crie um grupo de segurança que permita conexões na porta `5432` de IPs específicos (por exemplo, seu IP local ou endereços de IP do seu servidor de produção).
+   - Certifique-se de que apenas IPs autorizados possam se conectar para evitar acessos indesejados.
+3. **Obter a String de Conexão**
+
+   - No console RDS, selecione sua instância e clique em "Connectivity & security".
+   - Copie o `Endpoint` fornecido, algo como `blog-api-db.abc123xyz.us-east-1.rds.amazonaws.com`. Use esse endpoint para conectar ao banco de dados em vez de `localhost`.
+4. **Atualizar Configurações do Banco de Dados no Django**
+
+   - No arquivo `.env` ou diretamente na configuração de produção, atualize para usar o endpoint do RDS:
+
+     ```env
+     DB_NAME=blog_api
+     DB_USER=postgres
+     DB_PASSWORD=<your-master-password>
+     DB_HOST=blog-api-db.abc123xyz.us-east-1.rds.amazonaws.com
+     DB_PORT=5432
+     ```
+   - Certifique-se de que o arquivo `production.py` do Django esteja configurado para usar estas variáveis:
+
+     ```python
+     DATABASES = {
+         'default': {
+             'ENGINE': 'django.db.backends.postgresql',
+             'NAME': config('DB_NAME'),
+             'USER': config('DB_USER'),
+             'PASSWORD': config('DB_PASSWORD'),
+             'HOST': config('DB_HOST'),
+             'PORT': config('DB_PORT', default='5432'),
+         }
+     }
+     ```
+5. **Aplicar Migrações e Testar Conexão**
+
+   - Execute as migrações para criar as tabelas no banco de dados RDS:
+     ```bash
+     python manage_env.py production migrate
+     ```
+   - Verifique se você consegue conectar à instância RDS e que todas as tabelas foram criadas com sucesso.
+
+### Considerações de Segurança
+
+- **Use IAM Roles**: Para conexões mais seguras, considere usar roles IAM para autenticar conexões com o banco de dados, em vez de senhas fixas.
+- **Backup e Recuperação**: Configure snapshots automáticos para garantir que seus dados estejam protegidos contra perdas.
+- **Monitoring e Alertas**: Ative o monitoramento no Amazon RDS para acompanhar o desempenho e definir alertas para possíveis problemas.
+
+Teste a conexao atraves com o RDS
+![1729366159588](image/Roadmap/1729366159588.png)
+
+</details>
 
 <details>
-  <summary>4. Configuração para Integração Contínua com GitHub Actions</summary>
+  <summary>5. Configuração para Integração Contínua com GitHub Actions</summary>
 
 ### Configuração de CI/CD Usando GitHub Actions
 
 Para automatizar a execução de testes e verificar se as alterações estão funcionando corretamente em cada commit ou Pull Request, vamos configurar um pipeline simples usando GitHub Actions.
 
-#### Criar Workflow no GitHub Actions
+#### 1. Criar Workflow no GitHub Actions
 
 **Adicionar Arquivo de Workflow**
 
@@ -388,21 +479,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:13
-        env:
-          POSTGRES_DB: ${{ secrets.DB_NAME }}
-          POSTGRES_USER: ${{ secrets.DB_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        options: >-
-          --health-cmd "pg_isready -U ${{ secrets.DB_USER }}" 
-          --health-interval 10s 
-          --health-timeout 5s 
-          --health-retries 5
-        ports:
-          - 5432:5432
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
@@ -417,16 +493,23 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Set Environment Variables
+        env:
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+
       - name: Run migrations
         run: |
-          python manage.py migrate --settings=settings.base
+          python manage.py migrate --settings=project.settings.production
 
       - name: Run tests
         run: |
-          python manage.py test --settings=settings.base
-```
+          python manage.py test --settings=project.settings.production
 
-### Explicação:
+```
 
 - `on`: Define quando o workflow será executado (em push para main e develop, e em PRs).
 - `services`: Inicia um container PostgreSQL para que os testes sejam executados em um ambiente similar ao de produção.
@@ -437,7 +520,7 @@ jobs:
 - `Run migrations`: Aplica as migrações do banco de dados.
 - `Run tests`: Executa os testes.
 
-### Configurar Segredos no GitHub
+### 2. Configurar Segredos no GitHub
 
 Certifique-se de adicionar os seguintes segredos no repositório para que as credenciais do banco de dados não fiquem expostas:
 
@@ -448,3 +531,26 @@ DB_PASSWORD
 ```
 
 Esses segredos são configurados diretamente no repositório, em Settings > Secrets.
+
+### 3. Modifique o `requirements.txt` (Se Necessário)
+
+Se você ainda não tiver um `requirements.txt`, crie um usando:
+
+```
+
+pip freeze > requirements.txt
+
+```
+
+Certifique-se de que ele inclua todas as dependências necessárias para rodar o projeto e os testes.
+
+### 4. Fazer um Push para o Repositório
+
+Após configurar o workflow, você pode fazer um commit e um push para `main` ou `develop`:
+
+```
+git add .github/workflows/ci.yml
+git commit -m "Add CI Pipeline for testing"
+git push origin develop
+
+```
