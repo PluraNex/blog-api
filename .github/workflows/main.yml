@@ -15,12 +15,14 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DJANGO_SETTINGS_MODULE: project.settings.test  # Ajuste para o caminho correto
-      DB_NAME: test_db
-      DB_USER: test_user
-      DB_PASSWORD: test_password
-      DB_HOST: 127.0.0.1
-      DB_PORT: 5432
+      DJANGO_SETTINGS_MODULE: project.settings.development  # Usando o ambiente de desenvolvimento
+      DEV_DB_NAME: test_db
+      DEV_DB_USER: test_user
+      DEV_DB_PASSWORD: test_password
+      DEV_DB_HOST: 127.0.0.1
+      DEV_DB_PORT: 5432
+      DEV_DEBUG: 'True'
+      DEV_ALLOWED_HOSTS: localhost
 
     services:
       postgres:
@@ -53,7 +55,7 @@ jobs:
 
       - name: Wait for PostgreSQL to be ready
         run: |
-          until pg_isready -h $DB_HOST -p $DB_PORT; do
+          until pg_isready -h $DEV_DB_HOST -p $DEV_DB_PORT; do
             echo "Waiting for PostgreSQL to be ready..."
             sleep 2
           done
