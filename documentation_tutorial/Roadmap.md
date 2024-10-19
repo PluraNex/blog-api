@@ -536,6 +536,8 @@ Esses segredos são configurados diretamente no repositório, em Settings > Secr
 
 Se você ainda não tiver um `requirements.txt`, crie um usando:
 
+![1729379009482](image/Roadmap/1729379009482.png)
+
 ```
 
 pip freeze > requirements.txt
