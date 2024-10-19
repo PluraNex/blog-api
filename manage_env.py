@@ -2,16 +2,20 @@ import os
 import sys
 from utils.banner import print_banner
 
-if __name__ == "__main__":
-    # Definir qual ambiente usar
-    env = sys.argv[1] if len(sys.argv) > 1 else "development"
-    
-    # Garantir que o ambiente não seja um comando do Django
-    if env in ["runserver", "migrate", "createsuperuser", "shell", "makemigrations"]:
-        env = "development"
-    else:
-        sys.argv.pop(1)
+def get_env_from_args():
+    # Verifique se existe um argumento --env=development ou --env=production
+    for arg in sys.argv:
+        if arg.startswith("--env="):
+            _, env = arg.split("=")
+            sys.argv.remove(arg)  # Remove o argumento para evitar conflitos com o Django
+            return env
+    return "development"  # Padrão para desenvolvimento
 
+if __name__ == "__main__":
+    # Definir o ambiente usando a nova função
+    env = get_env_from_args()
+
+    # Definir a variável de ambiente do Django
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", f"project.settings.{env}")
 
     # Log para confirmar o ambiente

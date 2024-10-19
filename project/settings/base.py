@@ -1,14 +1,19 @@
+
 from pathlib import Path
-from decouple import config, Csv
+from dotenv import load_dotenv
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Security
-SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=False, cast=bool)
+# Carregar variáveis do arquivo .env
+load_dotenv()
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost', cast=Csv())
+# Security
+SECRET_KEY = os.getenv('SECRET_KEY')
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
+
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -49,18 +54,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'blog.wsgi.application'
-
-# Database
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT', default='5432'),
-    }
-}
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
