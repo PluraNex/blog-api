@@ -53,8 +53,7 @@ Nesta etapa, vamos configurar o ambiente de desenvolvimento para o projeto Djang
 
    - Inicie um novo projeto Django chamado `blog`:
      ```bash
-     django-admin startproject blog
-     cd blog
+     django-admin startproject blog .
      ```
 5. **Configurar Banco de Dados**
 
@@ -72,7 +71,6 @@ Nesta etapa, vamos configurar o ambiente de desenvolvimento para o projeto Djang
    - Acesse `http://localhost:8000/` no navegador para confirmar se tudo está funcionando.
 
 ### Evidências
-
 
 ![1729356471868](image/Roadmap/1729356471868.png)
 
@@ -99,8 +97,12 @@ Configurar PostgreSQL como o banco de dados para o projeto Django. Inclui instal
    - Use o DBeaver para gerenciar o banco de dados PostgreSQL. Baixe a ferramenta [aqui](https://dbeaver.io/download/).
 3. **Criar Banco de Dados**
 
+   ![1729357340910](image/Roadmap/1729357340910.png)
+
    - Crie um novo banco de dados chamado `blog_api` usando o DBeaver ou comandos SQL no terminal do PostgreSQL.
-4. **Instalar `psycopg2`**
+4. **Instalar `psycopg2
+
+   ![1729357152719](image/Roadmap/1729357152719.png)
 
    - `psycopg2` é necessário para conectar o Django ao PostgreSQL:
      ```bash
@@ -130,7 +132,7 @@ Configurar PostgreSQL como o banco de dados para o projeto Django. Inclui instal
 
 ### Evidências:
 
-![image](https://example.com/image3.png)
+![1729357550695](image/Roadmap/1729357550695.png)
 ![image](https://example.com/image4.png)
 
 </details>
@@ -144,6 +146,8 @@ Para tornar o projeto mais seguro e escalável, é necessário gerenciar variáv
 ## Instalação do Gerenciador de Variáveis de Ambiente
 
 Instale o pacote `python-decouple` para gerenciar variáveis de ambiente:
+
+![1729357649180](image/Roadmap/1729357649180.png)
 
 ```bash
 pip install python-decouple
@@ -171,6 +175,13 @@ DB_PORT=5432
 ## Configurações Diferenciadas por Ambiente
 
 - Crie diferentes arquivos de configuração para ambientes de desenvolvimento, teste e produção. Isso ajuda a manter variáveis específicas para cada um desses contextos.
+- Primeiro, precisamos reorganizar o seu projeto para que as configurações sejam divididas em vários arquivos. No seu diretório do projeto, execute os seguintes comandos:![1729358338663](image/Roadmap/1729358338663.png)
+
+  ![1729358410405](image/Roadmap/1729358410405.png)
+- ```
+  mkdir -p project/settings
+  mv blog/settings.py project/settings/base.py
+  ```
 
 ```python
 settings/
@@ -181,7 +192,9 @@ settings/
 
 ```
 
-Exemplo de base.py:
+### 2. Atualizar o `base.py` com Configurações Comuns
+
+Certifique-se de que o arquivo `base.py` esteja preparado para usar variáveis de ambiente e sirva como base para todos os outros ambientes:
 
 ```python
 from decouple import config
@@ -206,6 +219,8 @@ DATABASES = {
 ## Desenvolvimento (`development.py`)
 
 Inclua configurações que são específicas para desenvolvimento, como `DEBUG=True` e `ALLOWED_HOSTS` definidos para `localhost`:
+
+Crie um arquivo `development.py` para configurações específicas de desenvolvimento:
 
 ```python
 from .base import *
@@ -242,14 +257,68 @@ Crie um Script de Gerenciamento Personalizado
 
 Crie um arquivo chamado manage_env.py na raiz do projeto, com o seguinte conteúdo:
 
+instale o colorama para fazer a tela de log estilizada 
+```bash
+pip install colorama
+
+```
+![1729360709443](image/Roadmap/1729360709443.png)
+
+Crie a funcao do banner dentro de um diretorio utils
+```python
+import os
+from colorama import Fore, Style, init
+
+# Inicializar colorama para garantir que funcione no Windows também
+init(autoreset=True)
+
+def print_banner(env):
+    # Verificar se já imprimimos o banner
+    if os.environ.get("DJANGO_ALREADY_STARTED") != "true":
+        # Banner estilizado
+        banner = """
+        -------------------------------------------------
+        |                                               |
+        |          🚀 Welcome to Blog API 🚀            |
+        |                                               |
+        -------------------------------------------------
+        """
+        print(banner)
+        
+        # Configurações de cores e ícones para ambientes específicos
+        color = Fore.CYAN if env == "development" else Fore.RED if env == "production" else Fore.YELLOW
+        icon = "🛠️" if env == "development" else "🚀" if env == "production" else "🧪"
+
+        # Informações formatadas
+        print(f"{color}{icon}  Status: {Style.BRIGHT}Debug {'Active' if env == 'development' else 'Off'}")
+        print(f"{color}{icon}  Server: {Style.BRIGHT}http://127.0.0.1:8000")
+        print(f"{color}{icon}  Environment: {Style.BRIGHT}{env.capitalize()}")
+        print(f"{color}{icon}  Settings: {Style.BRIGHT}project.settings.{env}")
+
+        # Marcar que o banner já foi impresso
+        os.environ["DJANGO_ALREADY_STARTED"] = "true"
+
+```
+
 ```python
 import os
 import sys
+from utils.banner import print_banner
 
 if __name__ == "__main__":
     # Definir qual ambiente usar
     env = sys.argv[1] if len(sys.argv) > 1 else "development"
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", f"blog.settings.{env}")
+    
+    # Garantir que o ambiente não seja um comando do Django
+    if env in ["runserver", "migrate", "createsuperuser", "shell", "makemigrations"]:
+        env = "development"
+    else:
+        sys.argv.pop(1)
+
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", f"project.settings.{env}")
+
+    # Log para confirmar o ambiente
+    print_banner(env)
 
     try:
         from django.core.management import execute_from_command_line
@@ -259,8 +328,18 @@ if __name__ == "__main__":
             "available on your PYTHONPATH environment variable? Did you "
             "forget to activate a virtual environment?"
         ) from exc
-    execute_from_command_line(sys.argv[2:])
 
+    # Executar o comando do Django
+    execute_from_command_line(sys.argv)
+
+```
+
+![1729361587155](image/Roadmap/1729361587155.png)
+
+Agora podemos excluir no manager.py inicial
+
+```bash
+rm manage.py
 ```
 
 ## Como Usar o Script
