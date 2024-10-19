@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DJANGO_SETTINGS_MODULE: blog.settings.test  # Use um settings específico para testes
+      DJANGO_SETTINGS_MODULE: project.settings.test  # Ajuste para o caminho correto
       DB_NAME: test_db
       DB_USER: test_user
       DB_PASSWORD: test_password
