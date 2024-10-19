@@ -241,3 +241,90 @@ python manage_env.py production migrate
 
 </details>
 
+<details>
+  <summary>4. Configuração para Integração Contínua com GitHub Actions</summary>
+
+### Configuração de CI/CD Usando GitHub Actions
+
+Para automatizar a execução de testes e verificar se as alterações estão funcionando corretamente em cada commit ou Pull Request, vamos configurar um pipeline simples usando GitHub Actions.
+
+#### Criar Workflow no GitHub Actions
+
+**Adicionar Arquivo de Workflow**
+
+Crie um diretório chamado `.github/workflows` na raiz do seu projeto e adicione um arquivo chamado `ci.yml`:
+
+```yaml
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_DB: ${{ secrets.DB_NAME }}
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        options: >-
+          --health-cmd "pg_isready -U ${{ secrets.DB_USER }}" 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run migrations
+        run: |
+          python manage.py migrate --settings=settings.base
+
+      - name: Run tests
+        run: |
+          python manage.py test --settings=settings.base
+```
+### Explicação:
+- `on`: Define quando o workflow será executado (em push para main e develop, e em PRs).
+- `services`: Inicia um container PostgreSQL para que os testes sejam executados em um ambiente similar ao de produção.
+- `steps`: Cada etapa executa um comando específico:
+- `Check out repository`: Faz checkout do repositório.
+- `Set up Python`: Configura o Python na versão desejada.
+- `Install dependencies`: Instala as dependências definidas no requirements.txt.
+- `Run migrations`: Aplica as migrações do banco de dados.
+- `Run tests`: Executa os testes.
+
+### Configurar Segredos no GitHub
+
+Certifique-se de adicionar os seguintes segredos no repositório para que as credenciais do banco de dados não fiquem expostas:
+```
+DB_NAME
+DB_USER
+DB_PASSWORD
+```
+Esses segredos são configurados diretamente no repositório, em Settings > Secrets.
+
