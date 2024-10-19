@@ -13,3 +13,6 @@ staticfiles/
 # Environments
 venv/
 .venv/
+
+# Banco de dados SQLite
+blog/db.sqlite3

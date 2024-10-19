@@ -2,14 +2,35 @@
 <summary>1. Configuração do Ambiente de Desenvolvimento - Parte I</summary>
 
 ## Descrição
+
 Nesta etapa, vamos configurar o ambiente de desenvolvimento para o projeto Django. Isso inclui a criação do repositório Git, instalação do Django, configuração do banco de dados e preparação do ambiente virtual.
 
 ### Passos:
+
 1. **Criar Repositório no GitHub**
+
    - Acesse sua conta no GitHub e crie um novo repositório chamado `blog-api`.
    - Adicione um `.gitignore` para projetos Django, que pode ser gerado automaticamente ao criar o repositório ou copiado de templates comuns.
 
+     ```
+     # Python
+     __pycache__/
+     *.py[cod]
+     .env
+
+     # Django
+     media/
+     staticfiles/
+
+     # VSCode settings
+     .vscode/
+
+     # Environments
+     venv/
+     .venv/
+     ```
 2. **Instalar Python e Configurar Ambiente Virtual**
+
    - Certifique-se de que o Python esteja instalado em sua máquina (`python --version`).
    - Crie um ambiente virtual:
      ```bash
@@ -18,8 +39,8 @@ Nesta etapa, vamos configurar o ambiente de desenvolvimento para o projeto Djang
    - Ative o ambiente virtual:
      - **Windows**: `venv\Scripts\activate`
      - **Linux/Mac**: `source venv/bin/activate`
-
 3. **Instalar Django e Dependências**
+
    - Com o ambiente virtual ativo, instale o Django:
      ```bash
      pip install django
@@ -28,56 +49,65 @@ Nesta etapa, vamos configurar o ambiente de desenvolvimento para o projeto Djang
      ```bash
      python -m django --version
      ```
-
 4. **Criar Projeto Django**
+
    - Inicie um novo projeto Django chamado `blog`:
      ```bash
      django-admin startproject blog
      cd blog
      ```
-
 5. **Configurar Banco de Dados**
+
    - Inicialmente, utilizaremos o banco de dados SQLite. As configurações já estão presentes no arquivo `settings.py` do projeto.
    - Crie as tabelas necessárias com:
      ```bash
      python manage.py migrate
      ```
-
 6. **Iniciar Servidor de Desenvolvimento**
+
    - Execute o servidor para testar a configuração:
      ```bash
      python manage.py runserver
      ```
    - Acesse `http://localhost:8000/` no navegador para confirmar se tudo está funcionando.
 
-### Evidências:
-![image](https://example.com/image1.png)
-![image](https://example.com/image2.png)
+### Evidências
+
+
+![1729356471868](image/Roadmap/1729356471868.png)
+
+![1729356537493](image/Roadmap/1729356537493.png)
+
+![1729356590544](image/Roadmap/1729356590544.png)
+
 </details>
 
 <details>
 <summary>2. Configuração de Ambiente de Desenvolvimento - Parte II</summary>
 
 ## Descrição
+
 Configurar PostgreSQL como o banco de dados para o projeto Django. Inclui instalação, configuração e migração de banco de dados.
 
 ### Passos:
+
 1. **Instalar PostgreSQL**
+
    - Baixe e instale o PostgreSQL a partir do [site oficial](https://www.postgresql.org/download/).
-
 2. **Instalar DBeaver**
+
    - Use o DBeaver para gerenciar o banco de dados PostgreSQL. Baixe a ferramenta [aqui](https://dbeaver.io/download/).
-
 3. **Criar Banco de Dados**
-   - Crie um novo banco de dados chamado `blog_api` usando o DBeaver ou comandos SQL no terminal do PostgreSQL.
 
+   - Crie um novo banco de dados chamado `blog_api` usando o DBeaver ou comandos SQL no terminal do PostgreSQL.
 4. **Instalar `psycopg2`**
+
    - `psycopg2` é necessário para conectar o Django ao PostgreSQL:
      ```bash
      pip install psycopg2-binary
      ```
-
 5. **Atualizar Configurações do Banco de Dados no `settings.py`**
+
    - No arquivo `blog/settings.py`, configure o banco de dados:
      ```python
      DATABASES = {
@@ -91,16 +121,18 @@ Configurar PostgreSQL como o banco de dados para o projeto Django. Inclui instal
          }
      }
      ```
-
 6. **Migrar Banco de Dados**
+
    - Aplique as migrações para criar tabelas no PostgreSQL:
      ```bash
      python manage.py migrate
      ```
 
 ### Evidências:
+
 ![image](https://example.com/image3.png)
 ![image](https://example.com/image4.png)
+
 </details>
 
 <details> <summary>3. Gerenciamento de Variáveis de Ambiente e Configurações por Ambiente</summary>
@@ -116,6 +148,7 @@ Instale o pacote `python-decouple` para gerenciar variáveis de ambiente:
 ```bash
 pip install python-decouple
 ```
+
 ## Configuração do `.env` e `.env.example`
 
 Crie um arquivo `.env` na raiz do projeto para armazenar variáveis sensíveis como chaves secretas, credenciais de banco de dados e outras configurações específicas do ambiente.
@@ -136,7 +169,9 @@ DB_PORT=5432
 ```
 
 ## Configurações Diferenciadas por Ambiente
+
 - Crie diferentes arquivos de configuração para ambientes de desenvolvimento, teste e produção. Isso ajuda a manter variáveis específicas para cada um desses contextos.
+
 ```python
 settings/
     ├── base.py          # Configurações comuns a todos os ambientes
@@ -145,6 +180,7 @@ settings/
     ├── staging.py       # Configurações específicas para ambiente de homologação (opcional)
 
 ```
+
 Exemplo de base.py:
 
 ```python
@@ -230,11 +266,13 @@ if __name__ == "__main__":
 ## Como Usar o Script
 
 Para iniciar o ambiente de desenvolvimento:
+
 ```bash
 python manage_env.py development runserver
 ```
 
 Para aplicar migrações no ambiente de produção:
+
 ```bash
 python manage_env.py production migrate
 ```
@@ -308,7 +346,9 @@ jobs:
         run: |
           python manage.py test --settings=settings.base
 ```
+
 ### Explicação:
+
 - `on`: Define quando o workflow será executado (em push para main e develop, e em PRs).
 - `services`: Inicia um container PostgreSQL para que os testes sejam executados em um ambiente similar ao de produção.
 - `steps`: Cada etapa executa um comando específico:
@@ -321,10 +361,11 @@ jobs:
 ### Configurar Segredos no GitHub
 
 Certifique-se de adicionar os seguintes segredos no repositório para que as credenciais do banco de dados não fiquem expostas:
+
 ```
 DB_NAME
 DB_USER
 DB_PASSWORD
 ```
-Esses segredos são configurados diretamente no repositório, em Settings > Secrets.
 
+Esses segredos são configurados diretamente no repositório, em Settings > Secrets.
