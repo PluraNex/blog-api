@@ -1,66 +1,243 @@
-# Roadmap para Desenvolvimento da API do Blog
+<details>
+<summary>1. Configuração do Ambiente de Desenvolvimento - Parte I</summary>
 
-## Fase 1: Configuração Inicial do Projeto
-1. **Criar repositório no GitHub**
-2. **Adicionar `.gitignore` adequado para Python e Django**
-3. **Inicializar projeto Django e configurar ambiente virtual**
-4. **Adicionar configurações básicas do Django (`settings.py`, `urls.py`)**
-5. **Configurar Banco de Dados (inicialmente SQLite)**
+## Descrição
+Nesta etapa, vamos configurar o ambiente de desenvolvimento para o projeto Django. Isso inclui a criação do repositório Git, instalação do Django, configuração do banco de dados e preparação do ambiente virtual.
 
-## Fase 2: Configuração do Ambiente e Dependências
-6. **Instalar e configurar Django Rest Framework (DRF)**
-7. **Adicionar e configurar `djangorestframework-simplejwt` para autenticação JWT**
-8. **Configurar variáveis de ambiente e `.env` para manter chaves secretas**
-9. **Adicionar configuração básica de logging no Django**
-10. **Instalar e configurar biblioteca de documentação Swagger (`drf-yasg`)**
+### Passos:
+1. **Criar Repositório no GitHub**
+   - Acesse sua conta no GitHub e crie um novo repositório chamado `blog-api`.
+   - Adicione um `.gitignore` para projetos Django, que pode ser gerado automaticamente ao criar o repositório ou copiado de templates comuns.
 
-## Fase 3: Estrutura de Aplicativos
-11. **Criar app `articles` e adicionar configurações iniciais**
-12. **Criar app `authors` para gerenciar autores**
-13. **Criar app `categories` para gerenciar categorias**
-14. **Criar app `tags` para gerenciar tags**
-15. **Criar app `themes` para gerenciar temas de artigos**
+2. **Instalar Python e Configurar Ambiente Virtual**
+   - Certifique-se de que o Python esteja instalado em sua máquina (`python --version`).
+   - Crie um ambiente virtual:
+     ```bash
+     python -m venv venv
+     ```
+   - Ative o ambiente virtual:
+     - **Windows**: `venv\Scripts\activate`
+     - **Linux/Mac**: `source venv/bin/activate`
 
-## Fase 4: Modelagem do Banco de Dados
-16. **Adicionar modelos para `Article`, `Author`, `Category`, `Tag`, e `ArticleTheme`**
-17. **Criar e aplicar migrações iniciais para os modelos**
-18. **Adicionar indexes para otimização de consultas em `articles`, `tags`, `authors` e `categories`**
+3. **Instalar Django e Dependências**
+   - Com o ambiente virtual ativo, instale o Django:
+     ```bash
+     pip install django
+     ```
+   - Verifique se a instalação foi bem-sucedida:
+     ```bash
+     python -m django --version
+     ```
 
-## Fase 5: Serializers e Lógica de Negócio
-19. **Criar serializers para `Article`, `Author`, `Category`, `Tag`, e `ArticleTheme`**
-20. **Implementar validações customizadas nos serializers**
-21. **Adicionar lógica de criação e atualização nos serializers de `Article`**
+4. **Criar Projeto Django**
+   - Inicie um novo projeto Django chamado `blog`:
+     ```bash
+     django-admin startproject blog
+     cd blog
+     ```
 
-## Fase 6: Configuração de Views e Endpoints
-22. **Criar views para listar, criar, atualizar e deletar `Article`**
-23. **Implementar views para gerenciar `Author` (listar, criar, atualizar)**
-24. **Adicionar views para `Category`, `Tag` e `ArticleTheme`**
-25. **Configurar `ViewSets` e `Routers` para simplificar a configuração de rotas**
-26. **Adicionar endpoints para autenticação JWT (obter token, refresh)**
+5. **Configurar Banco de Dados**
+   - Inicialmente, utilizaremos o banco de dados SQLite. As configurações já estão presentes no arquivo `settings.py` do projeto.
+   - Crie as tabelas necessárias com:
+     ```bash
+     python manage.py migrate
+     ```
 
-## Fase 7: Funcionalidades Avançadas
-27. **Implementar sistema de busca e filtros avançados em `articles`**
-28. **Adicionar funcionalidade de listagem de artigos por autor, categoria e tags**
-29. **Adicionar sistema de paginação customizado para todas as listas**
-30. **Implementar contagem de visualizações para `articles` com `F` expressions**
-31. **Adicionar funcionalidade para atualizar dinamicamente as tags de um artigo**
+6. **Iniciar Servidor de Desenvolvimento**
+   - Execute o servidor para testar a configuração:
+     ```bash
+     python manage.py runserver
+     ```
+   - Acesse `http://localhost:8000/` no navegador para confirmar se tudo está funcionando.
 
-## Fase 8: Testes Unitários e Integração
-32. **Adicionar testes unitários para modelos e serializers de `articles`**
-33. **Criar testes de integração para endpoints de `Article`**
-34. **Adicionar testes para autenticação JWT e permissões de usuários**
-35. **Configurar ambiente de testes e usar `pytest` para facilitar a execução**
-36. **Criar uma pipeline de integração contínua (CI) no GitHub Actions para rodar os testes**
+### Evidências:
+![image](https://example.com/image1.png)
+![image](https://example.com/image2.png)
+</details>
 
-## Fase 9: Configurações de Performance e Segurança
-37. **Configurar middleware de limitação de taxa (`Rate Limiting`) com valores para usuários autenticados e anônimos**
-38. **Adicionar suporte a cache usando Redis e configurar endpoints que precisam de cache**
-39. **Implementar Sentry para captura de erros em tempo real**
-40. **Configurar HTTPS e HSTS para segurança em produção**
-41. **Adicionar controle de CORS para permitir requisições externas de domínios confiáveis**
+<details>
+<summary>2. Configuração de Ambiente de Desenvolvimento - Parte II</summary>
 
-## Fase 10: Documentação e Deploy
-42. **Documentar todas as rotas usando Swagger e adicionar exemplos de requisições/respostas**
-43. **Criar README detalhado com instruções para instalação, configuração e execução do projeto**
-44. **Configurar scripts para deploy (Dockerfile e docker-compose.yml)**
-45. **Realizar deploy inicial em um ambiente de produção (Heroku, AWS, Digital Ocean, etc.)**
+## Descrição
+Configurar PostgreSQL como o banco de dados para o projeto Django. Inclui instalação, configuração e migração de banco de dados.
+
+### Passos:
+1. **Instalar PostgreSQL**
+   - Baixe e instale o PostgreSQL a partir do [site oficial](https://www.postgresql.org/download/).
+
+2. **Instalar DBeaver**
+   - Use o DBeaver para gerenciar o banco de dados PostgreSQL. Baixe a ferramenta [aqui](https://dbeaver.io/download/).
+
+3. **Criar Banco de Dados**
+   - Crie um novo banco de dados chamado `blog_api` usando o DBeaver ou comandos SQL no terminal do PostgreSQL.
+
+4. **Instalar `psycopg2`**
+   - `psycopg2` é necessário para conectar o Django ao PostgreSQL:
+     ```bash
+     pip install psycopg2-binary
+     ```
+
+5. **Atualizar Configurações do Banco de Dados no `settings.py`**
+   - No arquivo `blog/settings.py`, configure o banco de dados:
+     ```python
+     DATABASES = {
+         'default': {
+             'ENGINE': 'django.db.backends.postgresql',
+             'NAME': 'blog_api',
+             'USER': 'postgres',
+             'PASSWORD': 'password',
+             'HOST': 'localhost',
+             'PORT': '5432',
+         }
+     }
+     ```
+
+6. **Migrar Banco de Dados**
+   - Aplique as migrações para criar tabelas no PostgreSQL:
+     ```bash
+     python manage.py migrate
+     ```
+
+### Evidências:
+![image](https://example.com/image3.png)
+![image](https://example.com/image4.png)
+</details>
+
+<details> <summary>3. Gerenciamento de Variáveis de Ambiente e Configurações por Ambiente</summary>
+
+## Descrição
+
+Para tornar o projeto mais seguro e escalável, é necessário gerenciar variáveis de ambiente e configurar o Django para diferentes ambientes (desenvolvimento, teste e produção).
+
+## Instalação do Gerenciador de Variáveis de Ambiente
+
+Instale o pacote `python-decouple` para gerenciar variáveis de ambiente:
+
+```bash
+pip install python-decouple
+```
+## Configuração do `.env` e `.env.example`
+
+Crie um arquivo `.env` na raiz do projeto para armazenar variáveis sensíveis como chaves secretas, credenciais de banco de dados e outras configurações específicas do ambiente.
+
+Crie um arquivo `.env.example` para fornecer um modelo de como deve ser configurado o `.env`, facilitando o setup para outros desenvolvedores.
+
+**Exemplo de `.env`:**
+
+```python
+SECRET_KEY=your-secret-key-here
+DEBUG=True
+DB_NAME=blog_development
+DB_USER=postgres
+DB_PASSWORD=mysecretpassword
+DB_HOST=localhost
+DB_PORT=5432
+
+```
+
+## Configurações Diferenciadas por Ambiente
+- Crie diferentes arquivos de configuração para ambientes de desenvolvimento, teste e produção. Isso ajuda a manter variáveis específicas para cada um desses contextos.
+```python
+settings/
+    ├── base.py          # Configurações comuns a todos os ambientes
+    ├── development.py   # Configurações específicas para desenvolvimento
+    ├── production.py    # Configurações específicas para produção
+    ├── staging.py       # Configurações específicas para ambiente de homologação (opcional)
+
+```
+Exemplo de base.py:
+
+```python
+from decouple import config
+
+SECRET_KEY = config('SECRET_KEY')
+DEBUG = config('DEBUG', default=False, cast=bool)
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST'),
+        'PORT': config('DB_PORT', default='5432'),
+    }
+}
+```
+
+# Configuração para Diferentes Ambientes
+
+## Desenvolvimento (`development.py`)
+
+Inclua configurações que são específicas para desenvolvimento, como `DEBUG=True` e `ALLOWED_HOSTS` definidos para `localhost`:
+
+```python
+from .base import *
+
+DEBUG = True
+
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+
+# Configurações adicionais específicas para desenvolvimento podem ser adicionadas aqui
+```
+
+## Produção (production.py)
+
+No ambiente de produção, garanta que DEBUG=False, defina ALLOWED_HOSTS para incluir o domínio do seu site, e configure variáveis adicionais para melhorar a segurança e a performance:
+
+```python
+from .base import *
+
+DEBUG = False
+
+ALLOWED_HOSTS = ['yourwebsite.com']
+
+# Configurações adicionais específicas para produção
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+```
+
+## Comando para Selecionar o Ambiente
+
+Para facilitar a execução do projeto em diferentes ambientes, crie um script que permita selecionar qual configuração usar ao iniciar o Django.
+
+Crie um Script de Gerenciamento Personalizado
+
+Crie um arquivo chamado manage_env.py na raiz do projeto, com o seguinte conteúdo:
+
+```python
+import os
+import sys
+
+if __name__ == "__main__":
+    # Definir qual ambiente usar
+    env = sys.argv[1] if len(sys.argv) > 1 else "development"
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", f"blog.settings.{env}")
+
+    try:
+        from django.core.management import execute_from_command_line
+    except ImportError as exc:
+        raise ImportError(
+            "Couldn't import Django. Are you sure it's installed and "
+            "available on your PYTHONPATH environment variable? Did you "
+            "forget to activate a virtual environment?"
+        ) from exc
+    execute_from_command_line(sys.argv[2:])
+
+```
+
+## Como Usar o Script
+
+Para iniciar o ambiente de desenvolvimento:
+```bash
+python manage_env.py development runserver
+```
+
+Para aplicar migrações no ambiente de produção:
+```bash
+python manage_env.py production migrate
+```
+
+</details>
+
