@@ -12,7 +12,7 @@ on:
 
 env:
   # Variáveis globais para o pipeline
-  DJANGO_SETTINGS_MODULE: project.settings.development
+  DJANGO_SETTINGS_MODULE: blog.settings.development
   DEV_DB_NAME: test_db
   DEV_DB_USER: test_user
   DEV_DB_PASSWORD: test_password
