@@ -11,7 +11,6 @@ on:
       - develop
 
 env:
-  # Variáveis globais para o pipeline
   DJANGO_SETTINGS_MODULE: blog.settings.development
   DEV_DB_NAME: test_db
   DEV_DB_USER: test_user
@@ -47,8 +46,8 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for better relevancy of analysis
-
+          fetch-depth: 0
+          
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
@@ -75,13 +74,13 @@ jobs:
 
       - name: Run tests and generate coverage report
         run: |
-          coverage run --source='.' manage_env.py test --env=development
+          coverage run --rcfile=.coveragerc manage_env.py test --env=development
           coverage xml
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
@@ -91,7 +90,7 @@ jobs:
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.qualitygate.wait=true
-            -Dsonar.coverage.exclusions=**/tests/**
+
 
   deploy-dev:
     name: Deploy to Development
