@@ -18,8 +18,9 @@ if __name__ == "__main__":
     # Definir a variável de ambiente do Django
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", f"project.settings.{env}")
 
-    # Log para confirmar o ambiente
-    print_banner(env)
+   # Mostrar o banner apenas se o comando for 'runserver'
+    if "runserver" in sys.argv:
+        print_banner(env)
 
     try:
         from django.core.management import execute_from_command_line
