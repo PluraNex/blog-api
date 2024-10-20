@@ -16,7 +16,7 @@ if __name__ == "__main__":
     env = get_env_from_args()
 
     # Definir a variável de ambiente do Django
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", f"project.settings.{env}")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", f"blog.settings.{env}")
 
    # Mostrar o banner apenas se o comando for 'runserver'
     if "runserver" in sys.argv:
