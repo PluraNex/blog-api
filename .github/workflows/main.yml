@@ -68,18 +68,31 @@ jobs:
         run: |
           python manage_env.py test --env=development
 
-  deploy:
+  deploy_dev:
     runs-on: ubuntu-latest
     needs: test  # Este job depende do job "test" ter sucesso
-    if: github.ref == 'refs/heads/develop'  # Apenas para a branch develop
+    if: github.ref == 'refs/heads/main'  # Apenas para a branch main
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
 
-      - name: Deploy to Production
+      - name: Deploy to Development Server
+        run: |
+          echo "Deploying to development..."
+          # Adicione aqui o seu script de deploy para o ambiente de desenvolvimento
+
+  deploy_prod:
+    runs-on: ubuntu-latest
+    needs: test  # Este job depende do job "test" ter sucesso
+    if: github.ref == 'refs/heads/production'  # Apenas para a branch production (ou outra que preferir)
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Deploy to Production Server
         run: |
           echo "Deploying to production..."
-          # Adicione aqui o seu script de deploy, por exemplo, para enviar para um servidor
+          # Adicione aqui o seu script de deploy para o ambiente de produção
 
     # Configuração de ambiente para aprovar manualmente o deploy
     environment:
