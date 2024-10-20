@@ -21,6 +21,7 @@ env:
   DEV_DEBUG: 'True'
   DEV_ALLOWED_HOSTS: localhost
   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  SECRET_KEY:  ${{ secrets.SECRET_KEY }}
 
 jobs:
   test-and-analyze:
