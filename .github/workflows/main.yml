@@ -65,7 +65,7 @@ jobs:
             sleep 2
           done
 
-       - name: Run makemigrations
+      - name: Run makemigrations
         run: |
           python manage_env.py makemigrations --env=development
       - name: Run migrations
