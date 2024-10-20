@@ -5,25 +5,28 @@ on:
     branches:
       - main
       - develop
-      - feature/*  # Qualquer branch de feature que desejar testar
   pull_request:
     branches:
       - main
       - develop
 
+env:
+  # Variáveis globais para o pipeline
+  DJANGO_SETTINGS_MODULE: project.settings.development
+  DEV_DB_NAME: test_db
+  DEV_DB_USER: test_user
+  DEV_DB_PASSWORD: test_password
+  DEV_DB_HOST: 127.0.0.1
+  DEV_DB_PORT: 5432
+  DEV_DEBUG: 'True'
+  DEV_ALLOWED_HOSTS: localhost
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+  SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
-
-    env:
-      DJANGO_SETTINGS_MODULE: project.settings.development
-      DEV_DB_NAME: test_db
-      DEV_DB_USER: test_user
-      DEV_DB_PASSWORD: test_password
-      DEV_DB_HOST: 127.0.0.1
-      DEV_DB_PORT: 5432
-      DEV_DEBUG: 'True'
-      DEV_ALLOWED_HOSTS: localhost
 
     services:
       postgres:
@@ -69,34 +72,13 @@ jobs:
         run: |
           python manage_env.py test --env=development
 
-  deploy_dev:
-    runs-on: ubuntu-latest
-    needs: test
-    if: github.ref == 'refs/heads/main'  # Apenas para a branch main
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v2
-
-      - name: Deploy to Development Server
-        run: |
-          echo "Deploying to development..."
-          # Adicione aqui o seu script de deploy para o ambiente de desenvolvimento
-
-  deploy_prod:
-    runs-on: ubuntu-latest
-    needs: test
-    if: github.ref == 'refs/heads/production'  # Apenas para a branch production
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v2
-
-      - name: Deploy to Production Server
-        run: |
-          echo "Deploying to production..."
-          # Adicione aqui o seu script de deploy para o ambiente de produção
-
-    environment:
-      name: Production
-      url: https://your-production-url.com
-    permissions:
-      contents: read
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        with:
+          projectKey: ${{ secrets.SONAR_PROJECT_KEY }}
+          organization: ${{ secrets.SONAR_ORGANIZATION }}
+          token: ${{ secrets.SONAR_TOKEN }}
+          args: >
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.coverage.exclusions=**/tests/**
