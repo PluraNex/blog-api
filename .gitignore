@@ -17,4 +17,12 @@ venv/
 # Banco de dados SQLite
 blog/db.sqlite3
 
+# Ignorar o arquivo de dados de cobertura
+.coverage
 
+# Ignorar diretório de relatórios HTML do coverage
+htmlcov/
+
+# Ignorar qualquer outro tipo de arquivo de relatório de cobertura
+coverage.xml
+.coverage.*

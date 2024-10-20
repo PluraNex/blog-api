@@ -1,0 +1,17 @@
+[run]
+source = .
+omit =
+    */migrations/*
+    */__init__.py
+    */asgi.py
+    */wsgi.py
+    */settings/*
+    manage_env.py
+    utils/banner.py
+
+[report]
+exclude_lines =
+    # Excluir linhas que contêm:
+    if __name__ == .__main__.:
+    pragma: no cover
+    # Adicione outras linhas que você deseja excluir
