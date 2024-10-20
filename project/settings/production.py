@@ -19,7 +19,6 @@ DATABASES = {
         'PORT': os.getenv('PROD_DB_PORT', '5432'),
     }
 }
-print("DJANGO_SETTINGS_MODULE:", os.environ.get("DJANGO_SETTINGS_MODULE"))
 
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
