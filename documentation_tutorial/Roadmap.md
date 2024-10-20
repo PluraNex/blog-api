@@ -532,7 +532,7 @@ DB_PASSWORD
 
 Esses segredos são configurados diretamente no repositório, em Settings > Secrets.
 
-### 3. Modifique o `requirements.txt` (Se Necessário)
+### 3. Modifique o `requirements.txt`  (Se Necessário)
 
 Se você ainda não tiver um `requirements.txt`, crie um usando:
 
