@@ -1,5 +1,3 @@
-# blog-api
-Uma API para blog usando Django e boas práticas de programação e arquitetura de software
 # Blog API
 
 ![Build Status](https://github.com/PluraNex/blog-api/actions/workflows/main.yml/badge.svg)
@@ -8,3 +6,4 @@ Uma API para blog usando Django e boas práticas de programação e arquitetura 
 ![License](https://img.shields.io/github/license/PluraNex/blog-api)
 ![Issues](https://img.shields.io/github/issues/PluraNex/blog-api)
 
+Uma API para blog usando Django e boas práticas de programação e arquitetura de software
