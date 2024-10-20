@@ -12,7 +12,7 @@ on:
 
 env:
   # Variáveis globais para o pipeline
-  DJANGO_SETTINGS_MODULE: project.settings.development
+  DJANGO_SETTINGS_MODULE: blog.settings.development
   DEV_DB_NAME: test_db
   DEV_DB_USER: test_user
   DEV_DB_PASSWORD: test_password
@@ -21,6 +21,7 @@ env:
   DEV_DEBUG: 'True'
   DEV_ALLOWED_HOSTS: localhost
   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  SECRET_KEY:  ${{ secrets.SECRET_KEY }}
 
 jobs:
   test-and-analyze:
@@ -65,6 +66,9 @@ jobs:
             sleep 2
           done
 
+      - name: Run makemigrations
+        run: |
+          python manage_env.py makemigrations --env=development
       - name: Run migrations
         run: |
           python manage_env.py migrate --env=development
