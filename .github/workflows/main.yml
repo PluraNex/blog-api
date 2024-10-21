@@ -67,7 +67,7 @@ jobs:
 
       - name: Run makemigrations
         run: |
-          python manage_env.py makemigrations --env=development
+          python manage_env.py makemigrations userprofile --env=development
       - name: Run migrations
         run: |
           python manage_env.py migrate --env=development
