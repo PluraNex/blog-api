@@ -72,15 +72,15 @@ jobs:
       - name: Ensure Test Database Setup
         run: |
           python manage_env.py migrate --env=development --noinput
-
-      - name: Check pending migrations
-        run: |
-          echo "Checking for any pending migrations..."
-          python manage_env.py showmigrations --env=development
       
-      - name: Explicitly migrate test database
+      - name: Drop existing test database
         run: |
-          echo "Applying migrations to the test database..."
+          echo "Dropping existing test database (if exists)..."
+          python manage_env.py dbshell --env=development -c "DROP DATABASE IF EXISTS test_db;"
+
+      - name: Create and Migrate Test Database
+        run: |
+          echo "Recreating and applying migrations to the test database..."
           python manage_env.py migrate --env=development --database=default --noinput
 
       - name: Log database status
@@ -107,6 +107,7 @@ jobs:
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.qualitygate.wait=true
+
 
   deploy-dev:
     name: Deploy to Development
