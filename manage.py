@@ -3,22 +3,17 @@ import sys
 from utils.banner import print_banner
 
 def get_env_from_args():
-    # Verifique se existe um argumento --env=development ou --env=production
     for arg in sys.argv:
-        if arg.startswith("--env="):
-            _, env = arg.split("=")
-            sys.argv.remove(arg)  # Remove o argumento para evitar conflitos com o Django
-            return env
-    return "development"  # Padrão para desenvolvimento
+        if arg == "--env=production":
+            sys.argv.remove(arg)
+            return "production"
+    return "development"
 
 if __name__ == "__main__":
-    # Definir o ambiente usando a nova função
     env = get_env_from_args()
 
-    # Definir a variável de ambiente do Django
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", f"blog.settings.{env}")
 
-   # Mostrar o banner apenas se o comando for 'runserver'
     if "runserver" in sys.argv:
         print_banner(env)
 
@@ -31,5 +26,4 @@ if __name__ == "__main__":
             "forget to activate a virtual environment?"
         ) from exc
 
-    # Executar o comando do Django
     execute_from_command_line(sys.argv)

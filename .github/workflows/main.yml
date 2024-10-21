@@ -67,14 +67,14 @@ jobs:
 
       - name: Run makemigrations
         run: |
-          python manage_env.py makemigrations userprofile --env=development
+          python manage.py makemigrations userprofile
       - name: Run migrations
         run: |
-          python manage_env.py migrate --env=development
+          python manage.py migrate
 
       - name: Run tests and generate coverage report
         run: |
-          coverage run --rcfile=.coveragerc manage_env.py test --env=development
+          coverage run --rcfile=.coveragerc manage.py test
           coverage xml
 
       - name: SonarCloud Scan
@@ -95,8 +95,8 @@ jobs:
   deploy-dev:
     name: Deploy to Development
     runs-on: ubuntu-latest
-    needs: test-and-analyze  # Só executa se o job de testes passar
-    if: github.ref == 'refs/heads/main'  # Executa quando houver push na branch main
+    needs: test-and-analyze
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Check out repository
@@ -110,8 +110,8 @@ jobs:
   deploy-prod:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: test-and-analyze  # Só executa se o job de testes passar
-    if: github.ref == 'refs/heads/production'  # Executa quando houver push na branch production
+    needs: test-and-analyze
+    if: github.ref == 'refs/heads/production'
 
     steps:
       - name: Check out repository
