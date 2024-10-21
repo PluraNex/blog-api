@@ -26,3 +26,6 @@ htmlcov/
 # Ignorar qualquer outro tipo de arquivo de relatório de cobertura
 coverage.xml
 .coverage.*
+
+# Ignora as migrations 
+*/migrations/**

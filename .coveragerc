@@ -5,6 +5,7 @@ omit =
     */__init__.py
     */asgi.py
     */wsgi.py
+    */tests/*
     */settings/*
     manage_env.py
     utils/banner.py
