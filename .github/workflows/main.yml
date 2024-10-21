@@ -73,6 +73,16 @@ jobs:
         run: |
           python manage_env.py migrate --env=development --noinput
 
+      - name: Check pending migrations
+        run: |
+          echo "Checking for any pending migrations..."
+          python manage_env.py showmigrations --env=development
+      
+      - name: Explicitly migrate test database
+        run: |
+          echo "Applying migrations to the test database..."
+          python manage_env.py migrate --env=development --database=default --noinput
+
       - name: Log database status
         run: |
           echo "Listing existing tables in the database..."
@@ -80,6 +90,7 @@ jobs:
 
       - name: Run tests and generate coverage report
         run: |
+          echo "Starting tests with coverage..."
           coverage run --rcfile=.coveragerc manage_env.py test --env=development --keepdb
           coverage xml
 
@@ -96,7 +107,6 @@ jobs:
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.qualitygate.wait=true
-
 
   deploy-dev:
     name: Deploy to Development
