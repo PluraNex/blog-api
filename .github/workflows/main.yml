@@ -72,7 +72,12 @@ jobs:
       - name: Ensure Test Database Setup
         run: |
           python manage_env.py migrate --env=development --noinput
-      
+
+      - name: Log database status
+        run: |
+          echo "Listing existing tables in the database..."
+          PGPASSWORD=$DEV_DB_PASSWORD psql -h $DEV_DB_HOST -U $DEV_DB_USER -d $DEV_DB_NAME -c '\dt'
+
       - name: Run tests and generate coverage report
         run: |
           coverage run --rcfile=.coveragerc manage_env.py test --env=development --keepdb
