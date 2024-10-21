@@ -65,11 +65,11 @@ jobs:
             sleep 2
           done
 
-      - name: Run makemigrations
+      - name: Run makemigrations for all apps
         run: |
-          python manage_env.py makemigrations --env=development
+          python manage_env.py makemigrations users userprofile --env=development
       
-      - name: Ensure Test Database Setup
+      - name: Ensure Test Database Setup with all migrations
         run: |
           python manage_env.py migrate --env=development --noinput
 
