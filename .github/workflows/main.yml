@@ -74,7 +74,7 @@ jobs:
 
       - name: Run tests and generate coverage report
         run: |
-          coverage run --rcfile=.coveragerc manage_env.py test --env=development
+          coverage run --rcfile=.coveragerc manage_env.py test --env=development --keepdb
           coverage xml
 
       - name: SonarCloud Scan
