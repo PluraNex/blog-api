@@ -68,9 +68,10 @@ jobs:
       - name: Run makemigrations
         run: |
           python manage_env.py makemigrations --env=development
-      - name: Run migrations
+      
+      - name: Run migrations for Test Database
         run: |
-          python manage_env.py migrate --env=development
+          python manage_env.py migrate --env=development --database=default
 
       - name: Run tests and generate coverage report
         run: |
