@@ -73,6 +73,11 @@ jobs:
         run: |
           python manage_env.py migrate --env=development --noinput
 
+      - name: Verify Database Tables
+        run: |
+          echo "Listing existing tables in the database..."
+          PGPASSWORD=$DEV_DB_PASSWORD psql -h $DEV_DB_HOST -U $DEV_DB_USER -d $DEV_DB_NAME -c "\dt"
+
       - name: Create Superuser for Tests
         run: |
           echo "Creating admin superuser for tests..."
