@@ -65,23 +65,16 @@ jobs:
             sleep 2
           done
 
-      - name: Run makemigrations for all apps
+      - name: Run makemigrations
         run: |
-          python manage_env.py makemigrations userprofile --env=development
-      
-      - name: Ensure Test Database Setup with all migrations
+          python manage_env.py makemigrations --env=development
+      - name: Run migrations
         run: |
-          python manage_env.py migrate --env=development --noinput
+          python manage_env.py migrate --env=development
 
-      - name: Verify Database Tables
-        run: |
-          echo "Listing existing tables in the database..."
-          PGPASSWORD=$DEV_DB_PASSWORD psql -h $DEV_DB_HOST -U $DEV_DB_USER -d $DEV_DB_NAME -c "\dt"
-      
       - name: Run tests and generate coverage report
         run: |
-          echo "Starting tests with coverage..."
-          coverage run --rcfile=.coveragerc manage_env.py test --env=development --keepdb
+          coverage run --rcfile=.coveragerc manage_env.py test --env=development
           coverage xml
 
       - name: SonarCloud Scan
