@@ -67,7 +67,7 @@ jobs:
 
       - name: Run makemigrations for all apps
         run: |
-          python manage_env.py makemigrations users userprofile --env=development
+          python manage_env.py makemigrations userprofile --env=development
       
       - name: Ensure Test Database Setup with all migrations
         run: |
