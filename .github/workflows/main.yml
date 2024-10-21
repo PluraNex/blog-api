@@ -69,10 +69,10 @@ jobs:
         run: |
           python manage_env.py makemigrations --env=development
       
-      - name: Run migrations for Test Database
+      - name: Ensure Test Database Setup
         run: |
-          python manage_env.py migrate --env=development --database=default
-
+          python manage_env.py migrate --env=development --noinput
+      
       - name: Run tests and generate coverage report
         run: |
           coverage run --rcfile=.coveragerc manage_env.py test --env=development --keepdb
