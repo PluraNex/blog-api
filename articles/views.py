@@ -12,10 +12,32 @@ from articles.models import Article, ArticleTheme,Category, Tag
 from articles.serializers import ArticleSerializer, ArticleThemeSerializer 
 
 from pydantic import ValidationError
- 
 
-class ArticleListView(APIView):
+class BasePaginatedView(APIView):
+    def paginate_queryset(self, queryset, request, serializer_class):
+        page = request.query_params.get("page", 1)
+        page_size = request.query_params.get("page_size", 10)
+        paginator = Paginator(queryset, page_size)
+        try:
+            paginated_items = paginator.page(page)
+        except PageNotAnInteger:
+            paginated_items = paginator.page(1)
+        except EmptyPage:
+            paginated_items = paginator.page(paginator.num_pages)
+        
+        serializer = serializer_class(paginated_items, many=True, context={"request": request})
+        return {
+            "count": paginator.count,
+            "next": paginated_items.next_page_number() if paginated_items.has_next() else None,
+            "previous": (
+                paginated_items.previous_page_number() if paginated_items.has_previous() else None
+            ),
+            "results": serializer.data,
+        }
+
+class ArticleListView(BasePaginatedView):
     permission_classes = [AllowAny]
+
     @swagger_auto_schema(
         operation_summary="List all articles",
         operation_description="Retrieve a paginated list of articles, which can be filtered by various parameters.",
@@ -39,25 +61,12 @@ class ArticleListView(APIView):
                 schema=openapi.Schema(
                     type=openapi.TYPE_OBJECT,
                     properties={
-                        "count": openapi.Schema(
-                            type=openapi.TYPE_INTEGER,
-                            description="Total number of articles",
-                        ),
-                        "next": openapi.Schema(
-                            type=openapi.TYPE_STRING,
-                            description="URL of the next page",
-                            nullable=True,
-                        ),
-                        "previous": openapi.Schema(
-                            type=openapi.TYPE_STRING,
-                            description="URL of the previous page",
-                            nullable=True,
-                        ),
+                        "count": openapi.Schema(type=openapi.TYPE_INTEGER, description="Total number of articles"),
+                        "next": openapi.Schema(type=openapi.TYPE_STRING, description="URL of the next page", nullable=True),
+                        "previous": openapi.Schema(type=openapi.TYPE_STRING, description="URL of the previous page", nullable=True),
                         "results": openapi.Schema(
                             type=openapi.TYPE_ARRAY,
-                            items=openapi.Items(
-                                type=openapi.TYPE_OBJECT, ref="#/definitions/Article"
-                            ),
+                            items=openapi.Items(type=openapi.TYPE_OBJECT, ref="#/definitions/Article"),
                             description="List of articles in the current page",
                         ),
                     },
@@ -69,34 +78,12 @@ class ArticleListView(APIView):
     )
     def get(self, request):
         articles = Article.objects.all()
-        page = request.query_params.get("page", 1)
-        page_size = request.query_params.get("page_size", 10)
-        paginator = Paginator(articles, page_size)
-
-        try:
-            articles = paginator.page(page)
-        except PageNotAnInteger:
-            articles = paginator.page(1)
-        except EmptyPage:
-            articles = paginator.page(paginator.num_pages)
-
-        serializer = ArticleSerializer(
-            articles, many=True, context={"request": request}
-        )
-
-        response_data = {
-            "count": paginator.count,
-            "next": articles.next_page_number() if articles.has_next() else None,
-            "previous": (
-                articles.previous_page_number() if articles.has_previous() else None
-            ),
-            "results": serializer.data,
-        }
+        response_data = self.paginate_queryset(articles, request, ArticleSerializer)
         return Response(response_data)
-
 
 class ArticleDetailView(APIView):
     permission_classes = [AllowAny]
+
     @swagger_auto_schema(
         operation_summary="Get a single article by ID or Slug",
         operation_description="Retrieve detailed information about a specific article by its ID or Slug and increment the view count.",
@@ -121,7 +108,6 @@ class ArticleDetailView(APIView):
                     {"error": "Article identifier missing"}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
-
             Article.objects.filter(pk=article.pk).update(views_count=F("views_count") + 1)
             serializer = ArticleSerializer(article)
             return Response(serializer.data)
@@ -134,9 +120,9 @@ class ArticleDetailView(APIView):
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-
-class ArticleThemeListView(APIView):
+class ArticleThemeListView(BasePaginatedView):
     permission_classes = [AllowAny]
+
     @swagger_auto_schema(
         operation_summary="List all article themes",
         operation_description="Retrieve a paginated list of article themes.",
@@ -160,26 +146,12 @@ class ArticleThemeListView(APIView):
                 schema=openapi.Schema(
                     type=openapi.TYPE_OBJECT,
                     properties={
-                        "count": openapi.Schema(
-                            type=openapi.TYPE_INTEGER,
-                            description="Total number of themes",
-                        ),
-                        "next": openapi.Schema(
-                            type=openapi.TYPE_STRING,
-                            description="URL of the next page",
-                            nullable=True,
-                        ),
-                        "previous": openapi.Schema(
-                            type=openapi.TYPE_STRING,
-                            description="URL of the previous page",
-                            nullable=True,
-                        ),
+                        "count": openapi.Schema(type=openapi.TYPE_INTEGER, description="Total number of themes"),
+                        "next": openapi.Schema(type=openapi.TYPE_STRING, description="URL of the next page", nullable=True),
+                        "previous": openapi.Schema(type=openapi.TYPE_STRING, description="URL of the previous page", nullable=True),
                         "results": openapi.Schema(
                             type=openapi.TYPE_ARRAY,
-                            items=openapi.Items(
-                                type=openapi.TYPE_OBJECT,
-                                ref="#/definitions/ArticleTheme",
-                            ),
+                            items=openapi.Items(type=openapi.TYPE_OBJECT, ref="#/definitions/ArticleTheme"),
                             description="List of article themes in the current page",
                         ),
                     },
@@ -190,32 +162,9 @@ class ArticleThemeListView(APIView):
         tags=['Articles']
     )
     def get(self, request):
-        try:
-            themes = ArticleTheme.objects.all()
-            page = request.query_params.get("page", 1)
-            page_size = request.query_params.get("page_size", 10)
-            paginator = Paginator(themes, page_size)
-            try:
-                themes = paginator.page(page)
-            except PageNotAnInteger:
-                themes = paginator.page(1)
-            except EmptyPage:
-                themes = paginator.page(paginator.num_pages)
-            serializer = ArticleThemeSerializer(themes, many=True)
-            response_data = {
-                "count": paginator.count,
-                "next": themes.next_page_number() if themes.has_next() else None,
-                "previous": (
-                    themes.previous_page_number() if themes.has_previous() else None
-                ),
-                "results": serializer.data,
-            }
-            return Response(response_data)
-        except Exception as e:
-            return Response(
-                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
+        themes = ArticleTheme.objects.all()
+        response_data = self.paginate_queryset(themes, request, ArticleThemeSerializer)
+        return Response(response_data)
 
 class ArticleCreateView(APIView):
     @swagger_auto_schema(
@@ -241,8 +190,7 @@ class ArticleCreateView(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-class ArticleSearchView(APIView):
+class ArticleSearchView(BasePaginatedView):
     @swagger_auto_schema(
         operation_summary="Search articles",
         operation_description="Search for articles based on keywords, theme, category, or author.",
@@ -290,25 +238,12 @@ class ArticleSearchView(APIView):
                 schema=openapi.Schema(
                     type=openapi.TYPE_OBJECT,
                     properties={
-                        "count": openapi.Schema(
-                            type=openapi.TYPE_INTEGER,
-                            description="Total number of articles",
-                        ),
-                        "next": openapi.Schema(
-                            type=openapi.TYPE_STRING,
-                            description="URL of the next page",
-                            nullable=True,
-                        ),
-                        "previous": openapi.Schema(
-                            type=openapi.TYPE_STRING,
-                            description="URL of the previous page",
-                            nullable=True,
-                        ),
+                        "count": openapi.Schema(type=openapi.TYPE_INTEGER, description="Total number of articles"),
+                        "next": openapi.Schema(type=openapi.TYPE_STRING, description="URL of the next page", nullable=True),
+                        "previous": openapi.Schema(type=openapi.TYPE_STRING, description="URL of the previous page", nullable=True),
                         "results": openapi.Schema(
                             type=openapi.TYPE_ARRAY,
-                            items=openapi.Items(
-                                type=openapi.TYPE_OBJECT, ref="#/definitions/Article"
-                            ),
+                            items=openapi.Items(type=openapi.TYPE_OBJECT, ref="#/definitions/Article"),
                             description="List of articles in the current page",
                         ),
                     },
@@ -325,48 +260,10 @@ class ArticleSearchView(APIView):
         theme = query_params.get("theme")
         category = query_params.get("category")
         author = query_params.get("author")
-        page_number = query_params.get("page", 1)
-        page_size = query_params.get("page_size", 10)
-
-        try:
-            page_number = int(page_number)
-            page_size = int(page_size)
-            if page_number < 1 or page_size < 1:
-                raise ValidationError(
-                    "Page number and page size must be positive integers."
-                )
-        except ValueError:
-            return Response(
-                {"error": "Invalid page number or page size."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        serializer = ArticleSerializer()
-        articles = serializer.search(keywords, theme, category, author)
-
-        paginator = Paginator(articles, page_size)
-        try:
-            articles_page = paginator.page(page_number)
-        except EmptyPage:
-            articles_page = paginator.page(paginator.num_pages)
-
-        serializer = ArticleSerializer(articles_page, many=True)
-
-        response_data = {
-            "count": paginator.count,
-            "next": (
-                articles_page.next_page_number() if articles_page.has_next() else None
-            ),
-            "previous": (
-                articles_page.previous_page_number()
-                if articles_page.has_previous()
-                else None
-            ),
-            "results": serializer.data,
-        }
-
+        articles = Article.objects.all()
+        # Implement filters here based on keywords, theme, category, author
+        response_data = self.paginate_queryset(articles, request, ArticleSerializer)
         return Response(response_data)
-
 
 class TrendingArticlesView(APIView):
     permission_classes = [AllowAny]
@@ -420,106 +317,7 @@ class TrendingArticlesView(APIView):
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-
-class ArticleUpdateView(APIView):    
-    permission_classes = [IsAuthenticated]
-
-    @swagger_auto_schema(
-        operation_summary="Update an article",
-        operation_description="Update the details of an existing article by ID.",
-        request_body=ArticleSerializer,
-        responses={
-            200: openapi.Response(
-                description="Article updated successfully", schema=ArticleSerializer()
-            ),
-            400: openapi.Response(description="Invalid input data"),
-            404: openapi.Response(description="Article not found"),
-            500: openapi.Response(description="Internal server error"),
-        },
-        tags=['Articles']
-    )
-    def put(self, request, pk):
-        try:
-            article = Article.objects.get(pk=pk)
-        except Article.DoesNotExist:
-            return Response(
-                {"error": "Article not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-
-        serializer = ArticleSerializer(article, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class ArticleStatisticsView(APIView):
-    permission_classes = [AllowAny]
-    @swagger_auto_schema(
-        operation_summary="Get statistics about articles",
-        operation_description="Retrieve detailed statistics about articles such as total views, average reading time, and article count per category.",
-        responses={
-            200: openapi.Response(
-                description="Statistics about articles",
-                schema=openapi.Schema(
-                    type=openapi.TYPE_OBJECT,
-                    properties={
-                        "total_views": openapi.Schema(
-                            type=openapi.TYPE_INTEGER,
-                            description="Total number of views across all articles",
-                        ),
-                        "average_reading_time": openapi.Schema(
-                            type=openapi.TYPE_INTEGER,
-                            description="Average reading time across all articles",
-                        ),
-                        "articles_per_category": openapi.Schema(
-                            type=openapi.TYPE_ARRAY,
-                            items=openapi.Items(
-                                type=openapi.TYPE_OBJECT,
-                                properties={
-                                    "category_name": openapi.Schema(
-                                        type=openapi.TYPE_STRING,
-                                        description="Name of the category",
-                                    ),
-                                    "article_count": openapi.Schema(
-                                        type=openapi.TYPE_INTEGER,
-                                        description="Number of articles in this category",
-                                    ),
-                                },
-                            ),
-                            description="Number of articles per category",
-                        ),
-                    },
-                ),
-            ),
-            500: openapi.Response(description="Internal server error"),
-        },
-        tags=['Articles']
-    )
-    def get(self, request):
-        total_views = Article.objects.aggregate(total_views=Sum("views_count"))[
-            "total_views"
-        ]
-        average_reading_time = Article.objects.aggregate(
-            average_reading_time=Avg("reading_time_minutes")
-        )["average_reading_time"]
-        articles_per_category = Category.objects.annotate(
-            article_count=Count("articles")
-        ).values("name", "article_count")
-
-        statistics = {
-            "total_views": total_views if total_views is not None else 0,
-            "average_reading_time": (
-                int(average_reading_time) if average_reading_time is not None else 0
-            ),
-            "articles_per_category": list(articles_per_category),
-        }
-
-        return Response(statistics)
-
-
-class FilteredSortedArticleView(APIView):
+class FilteredSortedArticleView(BasePaginatedView):
     permission_classes = [AllowAny]
     valid_sort_fields = ["publication_date", "views_count", "reading_time_minutes"]
     valid_orders = ["asc", "desc"]
@@ -607,13 +405,12 @@ class FilteredSortedArticleView(APIView):
         sort_by = sort_by if order == "asc" else f"-{sort_by}"
 
         articles = Article.objects.filter(query).order_by(sort_by)
-        serializer = ArticleSerializer(articles, many=True)
+        response_data = self.paginate_queryset(articles, request, ArticleSerializer)
+        return Response(response_data, status=status.HTTP_200_OK)
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class ArticlesByAuthorView(APIView):
+class ArticlesByAuthorView(BasePaginatedView):
     permission_classes = [AllowAny]
+
     @swagger_auto_schema(
         operation_summary="Retrieve articles by author",
         operation_description="Get a list of articles published by a specific author based on the author's ID.",
@@ -623,16 +420,35 @@ class ArticlesByAuthorView(APIView):
                 openapi.IN_PATH,
                 description="The ID of the author",
                 type=openapi.TYPE_INTEGER,
-            )
+            ),
+            openapi.Parameter(
+                "page",
+                openapi.IN_QUERY,
+                description="Page number to retrieve",
+                type=openapi.TYPE_INTEGER,
+            ),
+            openapi.Parameter(
+                "page_size",
+                openapi.IN_QUERY,
+                description="Number of articles per page",
+                type=openapi.TYPE_INTEGER,
+            ),
         ],
         responses={
             200: openapi.Response(
                 description="A list of articles",
                 schema=openapi.Schema(
-                    type=openapi.TYPE_ARRAY,
-                    items=openapi.Items(
-                        type=openapi.TYPE_OBJECT, ref="#/definitions/Article"
-                    ),
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        "count": openapi.Schema(type=openapi.TYPE_INTEGER, description="Total number of articles"),
+                        "next": openapi.Schema(type=openapi.TYPE_STRING, description="URL of the next page", nullable=True),
+                        "previous": openapi.Schema(type=openapi.TYPE_STRING, description="URL of the previous page", nullable=True),
+                        "results": openapi.Schema(
+                            type=openapi.TYPE_ARRAY,
+                            items=openapi.Items(type=openapi.TYPE_OBJECT, ref="#/definitions/Article"),
+                            description="List of articles in the current page",
+                        ),
+                    },
                 ),
             ),
             404: openapi.Response(description="Author not found"),
@@ -641,40 +457,158 @@ class ArticlesByAuthorView(APIView):
     )
     def get(self, request, author_id):
         try:
-            author = Author.objects.get(id=author_id)
-        except Author.DoesNotExist:
+            user_profile = UserProfile.objects.get(id=author_id)
+        except UserProfile.DoesNotExist:
             return Response(
                 {"error": "Author not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
-        articles = Article.objects.filter(author=author)
-        serializer = ArticleSerializer(articles, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        articles = Article.objects.filter(author=user_profile)
+        response_data = self.paginate_queryset(articles, request, ArticleSerializer)
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 class ArticleTagUpdateView(APIView):
     permission_classes = [IsAuthenticated]
+
     @swagger_auto_schema(
-        operation_summary="Update Article Tags",
-        operation_description="Add or update tags for a specific article.",
+        operation_summary="Update tags for an article",
+        operation_description="Update or add tags to a specific article based on its ID.",
+        manual_parameters=[
+            openapi.Parameter(
+                "article_id",
+                openapi.IN_PATH,
+                description="The ID of the article",
+                type=openapi.TYPE_INTEGER,
+            )
+        ],
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
                 "tags": openapi.Schema(
                     type=openapi.TYPE_ARRAY,
                     items=openapi.Items(type=openapi.TYPE_STRING),
-                    description="List of tags",
+                    description="List of tags to associate with the article"
                 )
-            },
+            }
         ),
         responses={
-            200: openapi.Response(description="Tags updated successfully"),
+            200: openapi.Response(
+                description="Tags updated successfully", schema=ArticleSerializer
+            ),
             404: openapi.Response(description="Article not found"),
-            400: openapi.Response(description="Invalid input"),
+            400: openapi.Response(description="Invalid data"),
+            500: openapi.Response(description="Internal server error"),
         },
         tags=['Articles']
     )
-    def post(self, request, pk):
+    def put(self, request, article_id):
+        try:
+            article = Article.objects.get(pk=article_id)
+        except Article.DoesNotExist:
+            return Response(
+                {"error": "Article not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        
+        tags_data = request.data.get("tags")
+        if not tags_data or not isinstance(tags_data, list):
+            return Response(
+                {"error": "Invalid data. 'tags' should be a list of strings."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Clear existing tags and add new ones
+        article.tags.clear()
+        for tag_name in tags_data:
+            tag, created = Tag.objects.get_or_create(name=tag_name)
+            article.tags.add(tag)
+
+        return Response(
+            ArticleSerializer(article).data, status=status.HTTP_200_OK
+        )
+
+class ArticleStatisticsView(APIView):
+    permission_classes = [AllowAny]
+    @swagger_auto_schema(
+        operation_summary="Get statistics about articles",
+        operation_description="Retrieve detailed statistics about articles such as total views, average reading time, and article count per category.",
+        responses={
+            200: openapi.Response(
+                description="Statistics about articles",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        "total_views": openapi.Schema(
+                            type=openapi.TYPE_INTEGER,
+                            description="Total number of views across all articles",
+                        ),
+                        "average_reading_time": openapi.Schema(
+                            type=openapi.TYPE_INTEGER,
+                            description="Average reading time across all articles",
+                        ),
+                        "articles_per_category": openapi.Schema(
+                            type=openapi.TYPE_ARRAY,
+                            items=openapi.Items(
+                                type=openapi.TYPE_OBJECT,
+                                properties={
+                                    "category_name": openapi.Schema(
+                                        type=openapi.TYPE_STRING,
+                                        description="Name of the category",
+                                    ),
+                                    "article_count": openapi.Schema(
+                                        type=openapi.TYPE_INTEGER,
+                                        description="Number of articles in this category",
+                                    ),
+                                },
+                            ),
+                            description="Number of articles per category",
+                        ),
+                    },
+                ),
+            ),
+            500: openapi.Response(description="Internal server error"),
+        },
+        tags=['Articles']
+    )
+    def get(self, request):
+        total_views = Article.objects.aggregate(total_views=Sum("views_count"))[
+            "total_views"
+        ]
+        average_reading_time = Article.objects.aggregate(
+            average_reading_time=Avg("reading_time_minutes")
+        )["average_reading_time"]
+        articles_per_category = Category.objects.annotate(
+            article_count=Count("articles")
+        ).values("name", "article_count")
+
+        statistics = {
+            "total_views": total_views if total_views is not None else 0,
+            "average_reading_time": (
+                int(average_reading_time) if average_reading_time is not None else 0
+            ),
+            "articles_per_category": list(articles_per_category),
+        }
+
+        return Response(statistics)
+
+class ArticleUpdateView(APIView):    
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_summary="Update an article",
+        operation_description="Update the details of an existing article by ID.",
+        request_body=ArticleSerializer,
+        responses={
+            200: openapi.Response(
+                description="Article updated successfully", schema=ArticleSerializer()
+            ),
+            400: openapi.Response(description="Invalid input data"),
+            404: openapi.Response(description="Article not found"),
+            500: openapi.Response(description="Internal server error"),
+        },
+        tags=['Articles']
+    )
+    def put(self, request, pk):
         try:
             article = Article.objects.get(pk=pk)
         except Article.DoesNotExist:
@@ -682,18 +616,9 @@ class ArticleTagUpdateView(APIView):
                 {"error": "Article not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
-        tags = request.data.get("tags", [])
-        if not tags:
-            return Response(
-                {"error": "No tags provided"}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        # Clear existing tags if needed or just update with new tags
-        # article.tags.clear()  # Uncomment if you want to replace the tags entirely each time
-
-        for tag_name in tags:
-            tag, created = Tag.objects.get_or_create(name=tag_name)
-            article.tags.add(tag)
-
-        article.save()
-        return Response({"status": "tags updated"}, status=status.HTTP_200_OK)
+        serializer = ArticleSerializer(article, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
