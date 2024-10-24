@@ -35,6 +35,7 @@ class ProfileDetailViewTest(TestCase):
         """
         Remove o diretório de mídia de teste após a execução dos testes.
         """
+        self.user.delete()
         if os.path.exists(TEST_MEDIA_ROOT):
             shutil.rmtree(TEST_MEDIA_ROOT)
 
