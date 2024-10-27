@@ -458,25 +458,7 @@ class ArticlesByAuthorView(BasePaginatedView):
                 type=openapi.TYPE_INTEGER,
             ),
         ],
-        responses={
-            200: openapi.Response(
-                description="A list of articles",
-                schema=openapi.Schema(
-                    type=openapi.TYPE_OBJECT,
-                    properties={
-                        "count": openapi.Schema(type=openapi.TYPE_INTEGER, description="Total number of articles"),
-                        "next": openapi.Schema(type=openapi.TYPE_STRING, description="URL of the next page", nullable=True),
-                        "previous": openapi.Schema(type=openapi.TYPE_STRING, description="URL of the previous page", nullable=True),
-                        "results": openapi.Schema(
-                            type=openapi.TYPE_ARRAY,
-                            items=openapi.Items(type=openapi.TYPE_OBJECT, ref="#/definitions/Article"),
-                            description="List of articles in the current page",
-                        ),
-                    },
-                ),
-            ),
-            404: openapi.Response(description="Author not found"),
-        },
+        responses=PAGINATED_ARTICLE_RESPONSE,
         tags=['articles']
     )
     def get(self, request, author_id):
