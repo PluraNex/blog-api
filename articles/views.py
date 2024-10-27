@@ -17,6 +17,26 @@ from userprofile.models import UserProfile
 
 ARTICLE_NOT_FOUND_ERROR = {"error": "Article not found"}
 
+PAGINATED_ARTICLE_RESPONSE = {
+    200: openapi.Response(
+        description="A paginated list of articles",
+        schema=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                "count": openapi.Schema(type=openapi.TYPE_INTEGER, description="Total number of articles"),
+                "next": openapi.Schema(type=openapi.TYPE_STRING, description="URL of the next page", nullable=True),
+                "previous": openapi.Schema(type=openapi.TYPE_STRING, description="URL of the previous page", nullable=True),
+                "results": openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_OBJECT, ref="#/definitions/Article"),
+                    description="List of articles in the current page",
+                ),
+            },
+        ),
+    ),
+    500: openapi.Response(description="Internal server error"),
+}
+
 class BasePaginatedView(APIView):
     def paginate_queryset(self, queryset, request, serializer_class):
         page = request.query_params.get("page", 1)
@@ -59,26 +79,8 @@ class ArticleListView(BasePaginatedView):
                 type=openapi.TYPE_INTEGER,
             ),
         ],
-        responses={
-            200: openapi.Response(
-                description="A paginated list of articles",
-                schema=openapi.Schema(
-                    type=openapi.TYPE_OBJECT,
-                    properties={
-                        "count": openapi.Schema(type=openapi.TYPE_INTEGER, description="Total number of articles"),
-                        "next": openapi.Schema(type=openapi.TYPE_STRING, description="URL of the next page", nullable=True),
-                        "previous": openapi.Schema(type=openapi.TYPE_STRING, description="URL of the previous page", nullable=True),
-                        "results": openapi.Schema(
-                            type=openapi.TYPE_ARRAY,
-                            items=openapi.Items(type=openapi.TYPE_OBJECT, ref="#/definitions/Article"),
-                            description="List of articles in the current page",
-                        ),
-                    },
-                ),
-            ),
-            500: openapi.Response(description="Internal server error"),
-        },
-        tags=['Articles']
+        responses=PAGINATED_ARTICLE_RESPONSE,
+        tags=['articles']
     )
     def get(self, request):
         articles = Article.objects.all()
@@ -99,7 +101,7 @@ class ArticleDetailView(APIView):
             404: openapi.Response(description="Article not found"),
             500: openapi.Response(description="Internal server error"),
         },
-        tags=['Articles']
+        tags=['articles']
     )
     def get(self, request, pk=None, slug=None):
         try:
@@ -163,7 +165,7 @@ class ArticleThemeListView(BasePaginatedView):
             ),
             500: openapi.Response(description="Internal server error"),
         },
-        tags=['Articles']
+        tags=['articles']
     )
     def get(self, request):
         themes = ArticleTheme.objects.all()
@@ -182,7 +184,7 @@ class ArticleCreateView(APIView):
             400: "Invalid data received",
             500: "Internal server error",
         },
-        tags=['Articles']
+        tags=['articles']
     )
     def post(self, request, *args, **kwargs):
         serializer = ArticleSerializer(data=request.data)
@@ -236,40 +238,8 @@ class ArticleSearchView(APIView):
                 type=openapi.TYPE_INTEGER,
             ),
         ],
-        responses={
-            200: openapi.Response(
-                description="A paginated list of articles",
-                schema=openapi.Schema(
-                    type=openapi.TYPE_OBJECT,
-                    properties={
-                        "count": openapi.Schema(
-                            type=openapi.TYPE_INTEGER,
-                            description="Total number of articles",
-                        ),
-                        "next": openapi.Schema(
-                            type=openapi.TYPE_STRING,
-                            description="URL of the next page",
-                            nullable=True,
-                        ),
-                        "previous": openapi.Schema(
-                            type=openapi.TYPE_STRING,
-                            description="URL of the previous page",
-                            nullable=True,
-                        ),
-                        "results": openapi.Schema(
-                            type=openapi.TYPE_ARRAY,
-                            items=openapi.Items(
-                                type=openapi.TYPE_OBJECT, ref="#/definitions/Article"
-                            ),
-                            description="List of articles in the current page",
-                        ),
-                    },
-                ),
-            ),
-            400: "Invalid page number or page size",
-            500: "Internal server error",
-        },
-        tags=['Articles']
+        responses=PAGINATED_ARTICLE_RESPONSE,
+        tags=['articles']
     )
     def get(self, request):
         query_params = request.query_params
@@ -347,7 +317,7 @@ class TrendingArticlesView(APIView):
             400: openapi.Response(description="Invalid request parameters"),
             500: openapi.Response(description="Internal server error"),
         },
-        tags=['Articles']
+        tags=['articles']
     )
     def get(self, request):
         try:
@@ -507,7 +477,7 @@ class ArticlesByAuthorView(BasePaginatedView):
             ),
             404: openapi.Response(description="Author not found"),
         },
-        tags=['Articles']
+        tags=['articles']
     )
     def get(self, request, author_id):
         try:
@@ -554,7 +524,7 @@ class ArticleTagUpdateView(APIView):
             400: openapi.Response(description="Invalid data"),
             500: openapi.Response(description="Internal server error"),
         },
-        tags=['Articles']
+        tags=['articles']
     )
     def put(self, request, article_id):
         try:
@@ -622,7 +592,7 @@ class ArticleStatisticsView(APIView):
             ),
             500: openapi.Response(description="Internal server error"),
         },
-        tags=['Articles']
+        tags=['articles']
     )
     def get(self, request):
         total_views = Article.objects.aggregate(total_views=Sum("views_count"))[
@@ -660,7 +630,7 @@ class ArticleUpdateView(APIView):
             404: openapi.Response(description="Article not found"),
             500: openapi.Response(description="Internal server error"),
         },
-        tags=['Articles']
+        tags=['articles']
     )
     def put(self, request, pk):
         try:
