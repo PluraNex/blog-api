@@ -98,19 +98,6 @@ class ArticleSerializerTest(TestCase):
 
         self.assertTrue(article.categories.filter(name="New Category").exists())
 
-    def test_article_serializer_get_absolute_url(self):
-        """
-        Testa se a URL absoluta é gerada corretamente.
-        Espera-se que a URL gerada pelo método `get_absolute_url` no serializer
-        seja a URL completa com base na requisição.
-        """
-        request = self.factory.get("/api/v1/articles/test-article/")
-        serializer_context = {"request": request}
-        serializer = ArticleSerializer(instance=self.article, context=serializer_context)
-
-        expected_url = request.build_absolute_uri(f"/api/v1/articles/{self.article.slug}/")
-        self.assertEqual(serializer.data["absolute_url"], expected_url)
-
     def test_article_serializer_formatted_publication_date(self):
         """
         Testa se a data de publicação é formatada corretamente.

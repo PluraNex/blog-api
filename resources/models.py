@@ -1,13 +1,13 @@
 from django.db import models
 from django.utils.html import mark_safe
 
+from articles.models import Article
+
 
 class ImageArticle(models.Model):
     prompt = models.TextField()
     image = models.ImageField(upload_to="article_images/", null=True, blank=True)
-    article = models.ForeignKey(
-        "articles.Article", on_delete=models.CASCADE, related_name="images"
-    )
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name="images", null=True, blank=True)
     article_slug = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

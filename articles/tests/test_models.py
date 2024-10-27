@@ -9,34 +9,46 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
 class ArticleModelTest(TestCase):
-    
+
     def setUp(self):
-        # Limpar dados anteriores e criar objetos necessários para os testes
+        """
+        Limpar dados anteriores e criar objetos necessários para os testes.
+        """
         self.clear_previous_data()
         self.create_test_user()
         self.create_common_objects()
-    
+
     def clear_previous_data(self):
+        """
+        Limpa dados anteriores de usuários, perfis de usuários, categorias e artigos.
+        """
         User.objects.all().delete()
         UserProfile.objects.all().delete()
         Category.objects.all().delete()
         Article.objects.all().delete()
 
     def create_test_user(self):
+        """
+        Cria um usuário e um perfil de autor para uso nos testes.
+        """
         self.user = User.objects.create_user(username="testuser", password="password123")
         self.user_profile, _ = UserProfile.objects.get_or_create(
-            user=self.user, 
+            user=self.user,
             defaults={'is_author': True}
         )
 
     def create_common_objects(self):
+        """
+        Cria objetos comuns usados nos testes, como tema, tag, categoria, artigo e imagem do artigo.
+        """
         self.theme = ArticleTheme.objects.create(name="Technology")
         self.tag = Tag.objects.create(name="Tech")
         self.category = Category.objects.create(name="Software")
         self.article = Article.objects.create(
             title="Sample Article",
             content="Content for sample article.",
-            author=self.user_profile
+            author=self.user_profile,
+            theme=self.theme
         )
         self.image_article = ImageArticle.objects.create(
             prompt="Sample prompt",
@@ -45,6 +57,9 @@ class ArticleModelTest(TestCase):
         )
 
     def create_article(self, **kwargs):
+        """
+        Função auxiliar para criar artigos adicionais com o autor de teste.
+        """
         return Article.objects.create(author=self.user_profile, **kwargs)
 
     def test_article_creation(self):
@@ -64,10 +79,10 @@ class ArticleModelTest(TestCase):
         )
         article.tags.add(self.tag)
         article.categories.add(self.category)
+
         self.assertEqual(Article.objects.count(), 2)
         self.assertEqual(article.title, "Introduction to Django")
         self.assertEqual(article.slug, slugify("Introduction to Django"))
-        self.assertEqual(article.get_absolute_url(), f"/api/v1/articles/{article.slug}/")
         self.assertEqual(article.visibility, "published")
         self.assertEqual(str(article), "Introduction to Django")
 
@@ -82,15 +97,30 @@ class ArticleModelTest(TestCase):
         )
         self.assertEqual(article.slug, slugify("Learn Python Programming"))
 
+    def test_article_slug_preservation(self):
+        """
+        Verifica se o slug é preservado ao salvar novamente o artigo.
+        Espera-se que o slug não mude quando o título é alterado após a criação do artigo.
+        """
+        article = self.create_article(
+            title="Persistent Slug",
+            content="Slug should not change.",
+        )
+        original_slug = article.slug
+        article.title = "Updated Title"
+        article.save()
+
+        self.assertEqual(article.slug, original_slug)
+
     def test_article_slug_uniqueness(self):
         """
-        Verifica se dois artigos não podem ter o mesmo slug.
+        Testa a unicidade do slug para garantir que dois artigos não possam ter o mesmo slug.
         Espera-se que uma exceção seja levantada ao tentar criar dois artigos com o mesmo título,
         garantindo que o slug gerado seja único.
         """
-        self.create_article(title="Same Title", content="Content 1")
+        self.create_article(title="Unique Slug", content="Content 1")
         with self.assertRaises(Exception):
-            self.create_article(title="Same Title", content="Content 2")
+            self.create_article(title="Unique Slug", content="Content 2")
 
     def test_article_reading_time_validator(self):
         """

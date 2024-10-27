@@ -1,3 +1,4 @@
+import logging
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Avg, Count, F, Q, Sum
 from django.forms import ValidationError
@@ -14,6 +15,7 @@ from articles.serializers import ArticleSerializer, ArticleThemeSerializer
 
 
 from userprofile.models import UserProfile
+logger = logging.getLogger(__name__)
 
 ARTICLE_NOT_FOUND_ERROR = {"error": "Article not found"}
 
@@ -39,9 +41,13 @@ PAGINATED_ARTICLE_RESPONSE = {
 
 class BasePaginatedView(APIView):
     def paginate_queryset(self, queryset, request, serializer_class):
+        if not queryset.query.order_by:
+            queryset = queryset.order_by("publication_date") 
+
         page = request.query_params.get("page", 1)
         page_size = request.query_params.get("page_size", 10)
         paginator = Paginator(queryset, page_size)
+        
         try:
             paginated_items = paginator.page(page)
         except PageNotAnInteger:
@@ -58,6 +64,7 @@ class BasePaginatedView(APIView):
             ),
             "results": serializer.data,
         }
+
 
 class ArticleListView(BasePaginatedView):
     permission_classes = [AllowAny]
@@ -83,7 +90,7 @@ class ArticleListView(BasePaginatedView):
         tags=['articles']
     )
     def get(self, request):
-        articles = Article.objects.all()
+        articles = Article.objects.all().order_by("publication_date")
         response_data = self.paginate_queryset(articles, request, ArticleSerializer)
         return Response(response_data)
 
@@ -168,7 +175,7 @@ class ArticleThemeListView(BasePaginatedView):
         tags=['articles']
     )
     def get(self, request):
-        themes = ArticleTheme.objects.all()
+        themes = ArticleTheme.objects.all().order_by("name")
         response_data = self.paginate_queryset(themes, request, ArticleThemeSerializer)
         return Response(response_data)
 
@@ -196,7 +203,7 @@ class ArticleCreateView(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ArticleSearchView(APIView):
+class ArticleSearchView(BasePaginatedView):
     @swagger_auto_schema(
         operation_summary="Search articles",
         operation_description="Search for articles based on keywords, theme, category, or author.",
@@ -247,47 +254,16 @@ class ArticleSearchView(APIView):
         theme = query_params.get("theme")
         category = query_params.get("category")
         author = query_params.get("author")
-        page_number = query_params.get("page", 1)
-        page_size = query_params.get("page_size", 10)
-
-        try:
-            page_number = int(page_number)
-            page_size = int(page_size)
-            if page_number < 1 or page_size < 1:
-                raise ValidationError(
-                    "Page number and page size must be positive integers."
-                )
-        except ValueError:
-            return Response(
-                {"error": "Invalid page number or page size."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
 
         serializer = ArticleSerializer()
         articles = serializer.search(keywords, theme, category, author)
 
-        paginator = Paginator(articles, page_size)
-        try:
-            articles_page = paginator.page(page_number)
-        except EmptyPage:
-            articles_page = paginator.page(paginator.num_pages)
+        if not articles.query.order_by:
+            articles = articles.order_by("publication_date")
+            
+        response_data = self.paginate_queryset(articles, request, ArticleSerializer)
+        return Response(response_data, status=status.HTTP_200_OK)
 
-        serializer = ArticleSerializer(articles_page, many=True)
-
-        response_data = {
-            "count": paginator.count,
-            "next": (
-                articles_page.next_page_number() if articles_page.has_next() else None
-            ),
-            "previous": (
-                articles_page.previous_page_number()
-                if articles_page.has_previous()
-                else None
-            ),
-            "results": serializer.data,
-        }
-
-        return Response(response_data)
 
 class TrendingArticlesView(APIView):
     permission_classes = [AllowAny]
@@ -428,10 +404,10 @@ class FilteredSortedArticleView(BasePaginatedView):
 
         sort_by = sort_by if order == "asc" else f"-{sort_by}"
 
-        articles = Article.objects.filter(query).order_by(sort_by)
+        articles = Article.objects.filter(query).order_by(sort_by if sort_by else "publication_date")
         response_data = self.paginate_queryset(articles, request, ArticleSerializer)
         return Response(response_data, status=status.HTTP_200_OK)
-
+    
 class ArticlesByAuthorView(BasePaginatedView):
     permission_classes = [AllowAny]
 
