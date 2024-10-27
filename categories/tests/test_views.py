@@ -141,3 +141,11 @@ class CategoryViewTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsNotNone(response.data["previous"])
         self.assertIsNotNone(response.data["next"])
+    
+    def test_articles_order(self):
+        """
+        Verifica se os artigos são retornados na ordem correta de criação.
+        """
+        response = self.client.get(reverse("category-detail", args=[self.category.id]))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(response.data["results"][0]['publication_date'], response.data["results"][1]['publication_date'])

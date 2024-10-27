@@ -1,5 +1,12 @@
+
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from rest_framework import serializers
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.exceptions import ValidationError
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -23,3 +30,39 @@ class RegisterSerializer(serializers.ModelSerializer):
             last_name=validated_data.get('last_name', '')
         )
         return user
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    username = serializers.CharField(required=False, allow_blank=True)
+    email = serializers.EmailField(required=False, allow_blank=True)
+    password = serializers.CharField(write_only=True)
+
+    def to_internal_value(self, data):
+       
+        if not data.get('username') and not data.get('email'):
+            raise ValidationError({"detail": "Credenciais de login inválidas."})
+
+        if data.get('email') and not data.get('username'):
+            try:
+                user = User.objects.get(email=data['email'])
+                data['username'] = user.username  # Converte o `username` associado ao `email`
+            except User.DoesNotExist:
+                raise ValidationError({"detail": "Credenciais de login inválidas."})
+
+        return super().to_internal_value(data)
+
+    def validate(self, attrs):
+        
+        username = attrs.get('username')
+        password = attrs.get('password')
+    
+        user = authenticate(username=username, password=password)
+        if not user:
+            raise ValidationError({"detail": "Credenciais de login inválidas."})
+
+        refresh = RefreshToken.for_user(user)
+        tokens = {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
+        return tokens

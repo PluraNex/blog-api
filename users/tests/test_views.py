@@ -1,3 +1,4 @@
+from django.urls import reverse
 from django.test import TestCase
 from django.contrib.auth.models import User
 from rest_framework.test import APIClient
@@ -5,6 +6,7 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 
 class UserViewSetTest(TestCase):
+    TOKEN_URL = reverse('token_obtain_pair')
     BASE_URL = "/api/v1/users/"
     CREATE_USER_DATA = {
         "username": "newuser",
@@ -45,7 +47,6 @@ class UserViewSetTest(TestCase):
         self.assertEqual(response.data['username'], self.CREATE_USER_DATA['username'])
         self.assertEqual(response.data['email'], self.CREATE_USER_DATA['email'])
     
-
     def test_create_user_missing_email(self):
         """
         Verifica se a criação de um novo usuário falha quando o campo 'email' está ausente.
@@ -156,7 +157,55 @@ class UserViewSetTest(TestCase):
         response = self.client.delete(f'{self.BASE_URL}{self.user.id}/')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_obtain_token_with_username(self):
+        """
+        Verifica se o token de autenticação é obtido com `username` e `password` válidos.
+        Deve retornar o status HTTP 200 OK e incluir tokens de acesso e refresh.
+        """
+        response = self.client.post(self.TOKEN_URL, {
+            "username": "testuser",
+            "password": "password123"
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', response.data)
+        self.assertIn('refresh', response.data)
 
+    def test_obtain_token_with_email(self):
+        """
+        Verifica se o token de autenticação é obtido com `email` e `password` válidos.
+        Deve retornar o status HTTP 200 OK e incluir tokens de acesso e refresh.
+        """
+        response = self.client.post(self.TOKEN_URL, {
+            "email": "testuser@example.com",
+            "password": "password123"
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', response.data)
+        self.assertIn('refresh', response.data)
 
+    def test_obtain_token_with_invalid_credentials(self):
+        """
+        Verifica se a autenticação falha com credenciais inválidas.
+        Deve retornar o status HTTP 400 BAD REQUEST e uma mensagem de erro apropriada.
+        """
+        response = self.client.post(self.TOKEN_URL, {
+            "username": "testuser",
+            "password": "wrongpassword"
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("detail", response.data)
+        self.assertEqual(str(response.data["detail"][0]), "Credenciais de login inválidas.")
+    
+    def test_obtain_token_missing_fields(self):
+        """
+        Verifica se a autenticação falha quando faltam os campos `username` ou `email`.
+        Deve retornar o status HTTP 400 BAD REQUEST com a mensagem apropriada.
+        """
+        response = self.client.post(self.TOKEN_URL, {
+            "password": "password123"
+        }, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("detail", response.data)
+        self.assertEqual(response.data["detail"], "Credenciais de login inválidas.")
 
 

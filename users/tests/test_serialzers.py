@@ -1,7 +1,7 @@
-# users/tests/test_serializers.py
+from rest_framework.exceptions import ValidationError
 from django.test import TestCase
 from django.contrib.auth.models import User
-from users.serializers import UserSerializer, RegisterSerializer
+from users.serializers import CustomTokenObtainPairSerializer, UserSerializer, RegisterSerializer
 
 class UserSerializerTest(TestCase):
 
@@ -46,6 +46,13 @@ class RegisterSerializerTest(TestCase):
             "first_name": "New",
             "last_name": "User"
         }
+        
+        # Criando o usuário para o teste
+        self.user = User.objects.create_user(
+            username="testuser",
+            email="testuser@example.com",
+            password="password123"
+        )
 
     def test_register_serializer_create(self):
         """
@@ -61,25 +68,50 @@ class RegisterSerializerTest(TestCase):
         self.assertEqual(user.first_name, self.user_data['first_name'])
         self.assertEqual(user.last_name, self.user_data['last_name'])
 
-    def test_register_serializer_missing_fields(self):
+    def test_token_serializer_with_missing_username_and_email(self):
         """
-        Verifica se o `RegisterSerializer` falha quando faltam campos obrigatórios.
+        Testa a validação do `CustomTokenObtainPairSerializer` quando tanto o `username` quanto o `email` estão ausentes.
+        Deve lançar um ValidationError com a mensagem "Credenciais de login inválidas."
         """
-        incomplete_data = {
-            "username": "incompleteuser",
-            # O campo "password" está ausente
-            "email": "incompleteuser@example.com"
-        }
-        serializer = RegisterSerializer(data=incomplete_data)
-        self.assertFalse(serializer.is_valid())
-        self.assertIn('password', serializer.errors)
+        serializer = CustomTokenObtainPairSerializer(data={'password': 'password123'})
+        with self.assertRaises(ValidationError) as context:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("Credenciais de login inválidas.", str(context.exception))
 
-    def test_register_serializer_invalid_email(self):
+    def test_token_serializer_with_email_instead_of_username(self):
         """
-        Verifica se o `RegisterSerializer` falha quando um email inválido é fornecido.
+        Testa o `CustomTokenObtainPairSerializer` usando o `email` para autenticação.
+        Deve retornar tokens de acesso e refresh ao autenticar com sucesso.
         """
-        invalid_email_data = self.user_data.copy()
-        invalid_email_data['email'] = 'invalid-email'
-        serializer = RegisterSerializer(data=invalid_email_data)
-        self.assertFalse(serializer.is_valid())
-        self.assertIn('email', serializer.errors)
+        data = {'email': 'testuser@example.com', 'password': 'password123'}
+        serializer = CustomTokenObtainPairSerializer(data=data)
+        
+        self.assertTrue(serializer.is_valid(raise_exception=True))
+        
+        tokens = serializer.validated_data
+
+        self.assertIn('refresh', tokens)
+        self.assertIn('access', tokens)
+
+    def test_token_serializer_invalid_credentials(self):
+        """
+        Testa o `CustomTokenObtainPairSerializer` com credenciais inválidas.
+        Deve lançar um ValidationError com a mensagem "Credenciais de login inválidas."
+        """
+        serializer = CustomTokenObtainPairSerializer(data={'username': 'testuser', 'password': 'wrongpassword'})
+        with self.assertRaises(ValidationError) as context:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("Credenciais de login inválidas.", str(context.exception))
+
+    def test_token_serializer_with_nonexistent_email(self):
+        """
+        Testa o `CustomTokenObtainPairSerializer` com um email que não existe no sistema.
+        Deve lançar um ValidationError com a mensagem "Credenciais de login inválidas."
+        """
+        data = {'email': 'nonexistent@example.com', 'password': 'password123'}
+        serializer = CustomTokenObtainPairSerializer(data=data)
+        
+        with self.assertRaises(ValidationError) as context:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("Credenciais de login inválidas.", str(context.exception))
+

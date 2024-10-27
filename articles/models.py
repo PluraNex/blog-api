@@ -1,5 +1,5 @@
 # articles/models.py
-from ckeditor.fields import RichTextField
+from django_ckeditor_5.fields import CKEditor5Field
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.template.defaultfilters import slugify
@@ -27,7 +27,7 @@ class Article(models.Model):
 
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True, null=True)
-    content = RichTextField()
+    content = CKEditor5Field()
     author = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name="articles")
     publication_date = models.DateTimeField(auto_now_add=True)
     theme = models.ForeignKey("ArticleTheme", on_delete=models.SET_NULL, null=True, blank=True)

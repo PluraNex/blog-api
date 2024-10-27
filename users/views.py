@@ -1,9 +1,10 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from django.contrib.auth.models import User
-from .serializers import UserSerializer, RegisterSerializer
+from .serializers import CustomTokenObtainPairSerializer, UserSerializer, RegisterSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from rest_framework_simplejwt.views import TokenObtainPairView 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -15,11 +16,6 @@ class UserViewSet(viewsets.ModelViewSet):
         elif self.action == 'create':
             return [permissions.AllowAny()]
         return [permissions.IsAuthenticated()]
-
-    def get_serializer_class(self):
-        if self.action == 'create':
-            return RegisterSerializer
-        return UserSerializer
     
     @swagger_auto_schema(
         operation_summary="Create a new user",
@@ -60,3 +56,23 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+    @swagger_auto_schema(
+        operation_summary="Obtenha o token de autenticação usando email ou username",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'username': openapi.Schema(type=openapi.TYPE_STRING, description="Username do usuário (opcional)"),
+                'email': openapi.Schema(type=openapi.TYPE_STRING, description="Email do usuário (opcional)"),
+                'password': openapi.Schema(type=openapi.TYPE_STRING, description="Senha do usuário"),
+            },
+            required=["password"],  # Apenas senha é obrigatória, `username` e `email` são opcionais
+            description="Informe o email ou o username, junto com a senha para obter o token."
+        ),
+        responses={200: "Token obtido com sucesso", 400: "Credenciais inválidas"}
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)

@@ -114,7 +114,7 @@ class CategoryDetailView(APIView):
                 {"error": "Category not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
-        articles = category.articles.all()
+        articles = category.articles.all().order_by('-publication_date')
         page = request.query_params.get("page", 1)
         page_size = request.query_params.get("page_size", 10)
         paginator = Paginator(articles, page_size)

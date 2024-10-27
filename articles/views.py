@@ -13,6 +13,8 @@ from articles.serializers import ArticleSerializer, ArticleThemeSerializer
 
 from pydantic import ValidationError
 
+from userprofile.models import UserProfile
+
 class BasePaginatedView(APIView):
     def paginate_queryset(self, queryset, request, serializer_class):
         page = request.query_params.get("page", 1)
