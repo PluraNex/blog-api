@@ -8,7 +8,7 @@ from .serializers import UserProfileSerializer
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 
 class ProfileDetailView(APIView):
 
@@ -70,3 +70,23 @@ class ProfileDetailView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ProfileListView(APIView):
+    """
+    Lista todos os perfis de usuário.
+    """
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    @swagger_auto_schema(
+        operation_summary="Retrieve all user profiles",
+        operation_description="Retrieve a list of all user profiles.",
+        responses={
+            200: openapi.Response(description="Profiles retrieved successfully", schema=UserProfileSerializer(many=True)),
+            500: openapi.Response(description="Internal server error"),
+        },
+        tags=['profile']
+    )
+    def get(self, request, *args, **kwargs):
+        profiles = UserProfile.objects.all()
+        serializer = UserProfileSerializer(profiles, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
