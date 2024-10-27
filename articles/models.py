@@ -26,7 +26,7 @@ class Article(models.Model):
     """Modelo para artigos, incluindo relações com autores, temas, tags e categorias"""
 
     title = models.CharField(max_length=200)
-    description = models.TextField(blank=True, null=True)
+    description = models.TextField(blank=True)
     content = CKEditor5Field()
     author = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name="articles")
     publication_date = models.DateTimeField(auto_now_add=True)

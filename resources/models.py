@@ -8,7 +8,7 @@ class ImageArticle(models.Model):
     article = models.ForeignKey(
         "articles.Article", on_delete=models.CASCADE, related_name="images"
     )
-    article_slug = models.CharField(max_length=255, blank=True, null=True)
+    article_slug = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     status = models.CharField(

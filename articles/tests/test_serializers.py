@@ -15,7 +15,6 @@ class ArticleSerializerTest(TestCase):
     
     def setUp(self):
         self.factory = APIRequestFactory()
-        # Limpar dados anteriores
         User.objects.all().delete()
         UserProfile.objects.all().delete()
         Category.objects.all().delete()
@@ -23,7 +22,7 @@ class ArticleSerializerTest(TestCase):
 
         self.user = User.objects.create_user(username="testuser", password="password123")
         
-        self.user_profile, created = UserProfile.objects.get_or_create(
+        self.user_profile, _ = UserProfile.objects.get_or_create(
             user=self.user, 
             defaults={'is_author': True}
         )

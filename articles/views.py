@@ -1,5 +1,6 @@
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Avg, Count, F, Q, Sum
+from django.forms import ValidationError
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 
@@ -11,9 +12,10 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from articles.models import Article, ArticleTheme,Category, Tag
 from articles.serializers import ArticleSerializer, ArticleThemeSerializer 
 
-from pydantic import ValidationError
 
 from userprofile.models import UserProfile
+
+ARTICLE_NOT_FOUND_ERROR = {"error": "Article not found"}
 
 class BasePaginatedView(APIView):
     def paginate_queryset(self, queryset, request, serializer_class):
@@ -115,7 +117,7 @@ class ArticleDetailView(APIView):
             return Response(serializer.data)
         except Article.DoesNotExist:
             return Response(
-                {"error": "Article not found"}, status=status.HTTP_404_NOT_FOUND
+                ARTICLE_NOT_FOUND_ERROR , status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
             return Response(
@@ -192,7 +194,7 @@ class ArticleCreateView(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ArticleSearchView(BasePaginatedView):
+class ArticleSearchView(APIView):
     @swagger_auto_schema(
         operation_summary="Search articles",
         operation_description="Search for articles based on keywords, theme, category, or author.",
@@ -240,12 +242,25 @@ class ArticleSearchView(BasePaginatedView):
                 schema=openapi.Schema(
                     type=openapi.TYPE_OBJECT,
                     properties={
-                        "count": openapi.Schema(type=openapi.TYPE_INTEGER, description="Total number of articles"),
-                        "next": openapi.Schema(type=openapi.TYPE_STRING, description="URL of the next page", nullable=True),
-                        "previous": openapi.Schema(type=openapi.TYPE_STRING, description="URL of the previous page", nullable=True),
+                        "count": openapi.Schema(
+                            type=openapi.TYPE_INTEGER,
+                            description="Total number of articles",
+                        ),
+                        "next": openapi.Schema(
+                            type=openapi.TYPE_STRING,
+                            description="URL of the next page",
+                            nullable=True,
+                        ),
+                        "previous": openapi.Schema(
+                            type=openapi.TYPE_STRING,
+                            description="URL of the previous page",
+                            nullable=True,
+                        ),
                         "results": openapi.Schema(
                             type=openapi.TYPE_ARRAY,
-                            items=openapi.Items(type=openapi.TYPE_OBJECT, ref="#/definitions/Article"),
+                            items=openapi.Items(
+                                type=openapi.TYPE_OBJECT, ref="#/definitions/Article"
+                            ),
                             description="List of articles in the current page",
                         ),
                     },
@@ -262,9 +277,46 @@ class ArticleSearchView(BasePaginatedView):
         theme = query_params.get("theme")
         category = query_params.get("category")
         author = query_params.get("author")
-        articles = Article.objects.all()
-        # Implement filters here based on keywords, theme, category, author
-        response_data = self.paginate_queryset(articles, request, ArticleSerializer)
+        page_number = query_params.get("page", 1)
+        page_size = query_params.get("page_size", 10)
+
+        try:
+            page_number = int(page_number)
+            page_size = int(page_size)
+            if page_number < 1 or page_size < 1:
+                raise ValidationError(
+                    "Page number and page size must be positive integers."
+                )
+        except ValueError:
+            return Response(
+                {"error": "Invalid page number or page size."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = ArticleSerializer()
+        articles = serializer.search(keywords, theme, category, author)
+
+        paginator = Paginator(articles, page_size)
+        try:
+            articles_page = paginator.page(page_number)
+        except EmptyPage:
+            articles_page = paginator.page(paginator.num_pages)
+
+        serializer = ArticleSerializer(articles_page, many=True)
+
+        response_data = {
+            "count": paginator.count,
+            "next": (
+                articles_page.next_page_number() if articles_page.has_next() else None
+            ),
+            "previous": (
+                articles_page.previous_page_number()
+                if articles_page.has_previous()
+                else None
+            ),
+            "results": serializer.data,
+        }
+
         return Response(response_data)
 
 class TrendingArticlesView(APIView):
@@ -509,7 +561,7 @@ class ArticleTagUpdateView(APIView):
             article = Article.objects.get(pk=article_id)
         except Article.DoesNotExist:
             return Response(
-                {"error": "Article not found"}, status=status.HTTP_404_NOT_FOUND
+               ARTICLE_NOT_FOUND_ERROR , status=status.HTTP_404_NOT_FOUND
             )
         
         tags_data = request.data.get("tags")
@@ -522,7 +574,7 @@ class ArticleTagUpdateView(APIView):
         # Clear existing tags and add new ones
         article.tags.clear()
         for tag_name in tags_data:
-            tag, created = Tag.objects.get_or_create(name=tag_name)
+            tag, _ = Tag.objects.get_or_create(name=tag_name)
             article.tags.add(tag)
 
         return Response(
@@ -615,7 +667,7 @@ class ArticleUpdateView(APIView):
             article = Article.objects.get(pk=pk)
         except Article.DoesNotExist:
             return Response(
-                {"error": "Article not found"}, status=status.HTTP_404_NOT_FOUND
+                ARTICLE_NOT_FOUND_ERROR , status=status.HTTP_404_NOT_FOUND
             )
 
         serializer = ArticleSerializer(article, data=request.data)

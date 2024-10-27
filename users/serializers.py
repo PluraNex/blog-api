@@ -8,6 +8,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.exceptions import ValidationError
 
+INVALID_CREDENTIALS_ERROR = "Credenciais de login inválidas."
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -40,14 +42,14 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def to_internal_value(self, data):
        
         if not data.get('username') and not data.get('email'):
-            raise ValidationError({"detail": "Credenciais de login inválidas."})
+            raise ValidationError({"detail": INVALID_CREDENTIALS_ERROR})
 
         if data.get('email') and not data.get('username'):
             try:
                 user = User.objects.get(email=data['email'])
-                data['username'] = user.username  # Converte o `username` associado ao `email`
+                data['username'] = user.username
             except User.DoesNotExist:
-                raise ValidationError({"detail": "Credenciais de login inválidas."})
+                raise ValidationError({"detail": INVALID_CREDENTIALS_ERROR})
 
         return super().to_internal_value(data)
 
@@ -58,7 +60,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     
         user = authenticate(username=username, password=password)
         if not user:
-            raise ValidationError({"detail": "Credenciais de login inválidas."})
+            raise ValidationError({"detail": INVALID_CREDENTIALS_ERROR})
 
         refresh = RefreshToken.for_user(user)
         tokens = {
