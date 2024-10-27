@@ -9,6 +9,7 @@ from userprofile.models import UserProfile
 from django.contrib.auth.models import User
 from django.utils import timezone
 from resources.models import ImageArticle
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 
 class ArticleSerializerTest(TestCase):
@@ -18,10 +19,10 @@ class ArticleSerializerTest(TestCase):
         User.objects.all().delete()
         UserProfile.objects.all().delete()
         Category.objects.all().delete()
+        Tag.objects.all().delete()
         Article.objects.all().delete()
 
         self.user = User.objects.create_user(username="testuser", password="password123")
-        
         self.user_profile, _ = UserProfile.objects.get_or_create(
             user=self.user, 
             defaults={'is_author': True}
@@ -30,7 +31,6 @@ class ArticleSerializerTest(TestCase):
         self.theme = ArticleTheme.objects.create(name="Technology")
         self.tag = Tag.objects.create(name="Tech")
         self.category = Category.objects.create(name="Software")
-
         self.article = Article.objects.create(
             title="Test Article",
             description="A test article description",
@@ -45,11 +45,19 @@ class ArticleSerializerTest(TestCase):
         self.article.tags.add(self.tag)
         self.article.categories.add(self.category)
 
+         # Fornece conteúdo válido para a imagem
         self.image_article = ImageArticle.objects.create(
             prompt="Sample prompt",
             article=self.article,
+            image=SimpleUploadedFile(
+                name="test_image.jpg",
+                content=b"fake_image_data",
+                content_type="image/jpeg"
+            ),
             status="aprovado"
         )
+        self.article.image_article = self.image_article
+        self.article.save()
 
     def test_article_serializer_fields(self):
         """
@@ -125,3 +133,30 @@ class ArticleSerializerTest(TestCase):
 
         results = serializer.search(category="Software")
         self.assertTrue(results.filter(categories__name="Software").exists())
+
+    def test_article_serializer_create_new_theme(self):
+        data = {
+            "title": "New Article",
+            "description": "Description",
+            "content": "Content",
+            "author": "testuser",
+            "theme": "New Theme",  # Tema inexistente
+            "reading_time_minutes": 5,
+            "tags": [{"name": "Tech"}],
+            "categories": [{"name": "Unique Category"}],
+        }
+        serializer = ArticleSerializer(data=data)
+        if not serializer.is_valid():
+            print(serializer.errors)  # Debug para ver o erro exato
+        self.assertTrue(serializer.is_valid())
+
+
+    def test_article_serializer_image_url(self):
+            request = self.factory.get("/")
+            serializer = ArticleSerializer(instance=self.article, context={"request": request})
+            image_url = serializer.data.get("image_url")
+            
+            # Verifique se a URL da imagem não é None
+            self.assertIsNotNone(image_url, "Erro: URL da imagem não encontrada.")
+            if image_url:
+                self.assertIn("article_images/", image_url)

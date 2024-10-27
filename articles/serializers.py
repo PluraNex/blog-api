@@ -38,7 +38,7 @@ class ArticleSerializer(serializers.ModelSerializer):
         if obj.image_article and obj.image_article.image:
             return request.build_absolute_uri(obj.image_article.image.url) if request else obj.image_article.image.url
         return None
-
+    
     def get_read_time(self, obj):
         return obj.reading_time_minutes
 
