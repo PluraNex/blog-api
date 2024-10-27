@@ -128,9 +128,7 @@ class ArticleSerializer(serializers.ModelSerializer):
         return articles
 
 
-    def update(self, instance, validated_data):
-        # Atualização de `author`
-        author_data = validated_data.pop('author', None)
+    def update_author(self, instance, author_data):
         if author_data:
             author_username = author_data.get("user", {}).get("username")
             if author_username:
@@ -140,28 +138,33 @@ class ArticleSerializer(serializers.ModelSerializer):
                 except UserProfile.DoesNotExist:
                     raise serializers.ValidationError({"author": "UserProfile not found for the given username."})
 
-        # Atualização de `theme`
-        theme_data = validated_data.pop("theme", None)
+    def update_theme(self, instance, theme_data):
         if theme_data:
             theme_name = theme_data.get("name")
             if theme_name:
                 theme, _ = ArticleTheme.objects.get_or_create(name=theme_name)
                 instance.theme = theme
 
-        # Atualização dos campos `tags` e `categories`
-        tags_data = validated_data.pop("tags", [])
+    def update_tags(self, instance, tags_data):
         if tags_data:
             instance.tags.clear()  # Limpa tags atuais
             for tag_data in tags_data:
                 tag, _ = Tag.objects.get_or_create(name=tag_data["name"])
                 instance.tags.add(tag)
 
-        categories_data = validated_data.pop("categories", [])
+    def update_categories(self, instance, categories_data):
         if categories_data:
             instance.categories.clear()  # Limpa categorias atuais
             for category_data in categories_data:
                 category, _ = Category.objects.get_or_create(name=category_data["name"])
                 instance.categories.add(category)
+
+    def update(self, instance, validated_data):
+        # Atualiza `author`, `theme`, `tags` e `categories` separadamente
+        self.update_author(instance, validated_data.pop("author", None))
+        self.update_theme(instance, validated_data.pop("theme", None))
+        self.update_tags(instance, validated_data.pop("tags", []))
+        self.update_categories(instance, validated_data.pop("categories", []))
 
         # Atualização dos demais campos diretamente no artigo
         for attr, value in validated_data.items():

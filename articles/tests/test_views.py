@@ -1,4 +1,5 @@
 import logging
+from unittest.mock import patch
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -139,3 +140,82 @@ class ArticleViewsTest(APITestCase):
         response = self.client.put(url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["title"], "Updated Article Title")
+
+    def test_articles_by_author_view_invalid_page(self):
+        url = reverse("articles-by-author", args=[self.user_profile.id]) + "?page=invalid"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("results", response.data)
+
+    def test_articles_by_author_view_empty_page(self):
+        url = reverse("articles-by-author", args=[self.user_profile.id]) + "?page=9999"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("results", response.data)
+
+    def test_article_detail_view_by_slug(self):
+        url = reverse("article-detail-slug", args=[self.article.slug])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["title"], self.article.title)
+
+    def test_article_detail_view_not_found(self):
+        url = reverse("article-detail", args=[9999])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {"error": "Article not found"})
+
+    def test_trending_articles_view_invalid_limit(self):
+        url = reverse("trending-articles") + "?limit=invalid"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", response.data)
+
+    def test_trending_articles_view_unexpected_error(self):
+        with patch("articles.models.Article.objects.order_by", side_effect=Exception("Test error")):
+            url = reverse("trending-articles") + "?limit=5"
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+            self.assertIn("error", response.data)
+
+    def test_filtered_sorted_article_view_invalid_sort(self):
+            url = reverse("filtered-sorted-articles") + "?sort_by=invalid_field&order=desc"
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertIn("error", response.data)
+
+    def test_filtered_sorted_article_view_invalid_order(self):
+            url = reverse("filtered-sorted-articles") + "?sort_by=views_count&order=invalid_order"
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertIn("error", response.data)
+
+    def test_articles_by_author_view_author_not_found(self):
+            url = reverse("articles-by-author", args=[9999])
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+            self.assertEqual(response.data, {"error": "Author not found"})
+
+    def test_article_tag_update_view_invalid_data(self):
+            self.client.force_authenticate(user=self.user)
+            url = reverse("article-tags-update", args=[self.article.id])
+            data = {"tags": "invalid_format"}
+            response = self.client.put(url, data, format="json")
+            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+            self.assertIn("error", response.data)
+
+    def test_article_tag_update_view_article_not_found(self):
+            self.client.force_authenticate(user=self.user)
+            url = reverse("article-tags-update", args=[9999])
+            data = {"tags": ["Updated Tag"]}
+            response = self.client.put(url, data, format="json")
+            self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+            self.assertEqual(response.data, {"error": "Article not found"})
+
+    def test_article_update_view_article_not_found(self):
+            self.client.force_authenticate(user=self.user)
+            url = reverse("article-update", args=[9999])
+            data = {"title": "Updated Title"}
+            response = self.client.put(url, data, format="json")
+            self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+            self.assertEqual(response.data, {"error": "Article not found"})

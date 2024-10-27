@@ -19,6 +19,7 @@ urlpatterns = [
     # Artigos
     path("articles/", ArticleListView.as_view(), name="article-list"),
     path("articles/<int:pk>/", ArticleDetailView.as_view(), name="article-detail"),
+    path("articles/slug/<slug:slug>/", ArticleDetailView.as_view(), name="article-detail-slug"),
     path("articles/create/", ArticleCreateView.as_view(), name="article-create"),
     path("articles/<int:pk>/update/", ArticleUpdateView.as_view(), name="article-update"),
     path("articles/search/", ArticleSearchView.as_view(), name="article-search"),
