@@ -33,7 +33,8 @@ INSTALLED_APPS = [
     'tags',
     'articles',
     'categories',
-    'resources'
+    'resources',
+    'user_preferences',
 ]
 
 MIDDLEWARE = [
