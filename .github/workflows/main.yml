@@ -67,7 +67,7 @@ jobs:
 
       - name: Run makemigrations
         run: |
-          python manage.py makemigrations userprofile tags articles categories resources user_preferences interactions notifications,
+          python manage.py makemigrations userprofile tags articles categories resources user_preferences interactions notifications
       - name: Run migrations
         run: |
           python manage.py migrate
