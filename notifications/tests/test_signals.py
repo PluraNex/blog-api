@@ -92,7 +92,7 @@ class NotificationSignalTests(BaseNotificationTest):
         """
         article_content_type = ContentType.objects.get_for_model(Article)
 
-        interactor_user, _ = User.objects.get_or_create(username='interactor_user', defaults={'password': '12345'})
+        interactor_user, _ = User.objects.get_or_create(username='interactor_user', defaults={'password': 'test_password'})
         
         self.notification_settings.notify_on_like = True
         self.notification_settings.save()

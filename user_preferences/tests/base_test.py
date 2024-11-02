@@ -31,6 +31,6 @@ class BaseTestSetup(TestCase):
         """
         Cria um usuário, perfil de usuário e configurações de notificação para uso nos testes.
         """
-        self.user, _ = User.objects.get_or_create(username='testuser', defaults={'password': '12345'})
+        self.user, _ = User.objects.get_or_create(username='testuser', defaults={'password': 'test_password'})
         self.user_profile, _ = UserProfile.objects.get_or_create(user=self.user)
         self.notification_settings, _ = NotificationSettings.objects.get_or_create(user_profile=self.user_profile)
