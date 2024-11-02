@@ -9,6 +9,8 @@ from drf_yasg import openapi
 from .models import NotificationSettings
 from .serializers import NotificationSettingsSerializer
 
+ERROR_NOTIFICATION_NOT_FOUND = "Notification settings not found"
+
 class NotificationSettingsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -32,7 +34,7 @@ class NotificationSettingsView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except NotificationSettings.DoesNotExist:
             return Response(
-                {"error": "Notification settings not found"},
+                {"error": ERROR_NOTIFICATION_NOT_FOUND },
                 status=status.HTTP_404_NOT_FOUND
             )
 
@@ -61,7 +63,7 @@ class NotificationSettingsView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except NotificationSettings.DoesNotExist:
             return Response(
-                {"error": "Notification settings not found"},
+                {"error": ERROR_NOTIFICATION_NOT_FOUND},
                 status=status.HTTP_404_NOT_FOUND
             )
 
@@ -90,6 +92,6 @@ class NotificationSettingsView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except NotificationSettings.DoesNotExist:
             return Response(
-                {"error": "Notification settings not found"},
+                {"error": ERROR_NOTIFICATION_NOT_FOUND},
                 status=status.HTTP_404_NOT_FOUND
             )
