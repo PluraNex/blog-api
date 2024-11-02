@@ -33,12 +33,12 @@ class TagViewTest(TestCase):
         self.article1 = Article.objects.create(
             title="Tech News",
             content="Latest updates on tech",
-            author=self.user_profile,  # Associar o autor ao artigo
+            author=self.user_profile,
         )
         self.article2 = Article.objects.create(
             title="AI Advancements",
             content="Deep learning trends",
-            author=self.user_profile,  # Associar o autor ao artigo
+            author=self.user_profile,
         )
 
         self.tag.articles.set([self.article1, self.article2])
