@@ -33,6 +33,7 @@ class Article(models.Model):
     image_article = models.ForeignKey("resources.ImageArticle", on_delete=models.SET_NULL, null=True, blank=True, related_name="images")
     visibility = models.CharField(max_length=10, choices=[("draft", "Rascunho"), ("published", "Publicado")], default="published")
     views_count = models.IntegerField(default=0)
+    like_count = models.PositiveIntegerField(default=0) 
     version = models.IntegerField(default=1)
     slug = models.SlugField(max_length=255, unique=True, null=True)
 
