@@ -18,7 +18,7 @@ class LikeArticleView(APIView):
             return Response({"error": "Article not found"}, status=status.HTTP_404_NOT_FOUND)
 
         content_type = ContentType.objects.get_for_model(article)
-        interaction, created = UserInteraction.objects.get_or_create(
+        _, created = UserInteraction.objects.get_or_create(
             user=request.user,
             content_type=content_type,
             object_id=article.id,
@@ -70,7 +70,7 @@ class FollowUserView(APIView):
             return Response({"error": "You cannot follow yourself"}, status=status.HTTP_400_BAD_REQUEST)
 
         content_type = ContentType.objects.get_for_model(user_to_follow_profile)
-        interaction, created = UserInteraction.objects.get_or_create(
+        _, created = UserInteraction.objects.get_or_create(
             user=request.user,
             content_type=content_type,
             object_id=user_to_follow_profile.id,
