@@ -33,7 +33,10 @@ INSTALLED_APPS = [
     'tags',
     'articles',
     'categories',
-    'resources'
+    'resources',
+    'user_preferences.apps.UserPreferencesConfig', 
+    'interactions',
+    'notifications'
 ]
 
 MIDDLEWARE = [
@@ -148,3 +151,27 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 CKEDITOR_UPLOAD_PATH = "uploads/"
+
+
+# settings.py
+
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'console': {
+#             'class': 'logging.StreamHandler',
+#         },
+#     },
+#     'root': {
+#         'handlers': ['console'],
+#         'level': 'DEBUG',  # Aumente para DEBUG para ver todos os logs
+#     },
+#     'loggers': {
+#         'user_preferences': {  # Nome do módulo para configurar logs da view
+#             'handlers': ['console'],
+#             'level': 'DEBUG',
+#             'propagate': True,
+#         },
+#     },
+# }

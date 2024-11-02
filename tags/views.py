@@ -9,14 +9,6 @@ from articles.serializers import ArticleSerializer
 from .models import Tag
 from .serializers import TagSerializer
 
-import logging
-
-# Configurar o logger
-logger = logging.getLogger(__name__)
-
-import logging
-
-logger = logging.getLogger(__name__)
 
 class TagDetailView(APIView):
     @swagger_auto_schema(
@@ -75,7 +67,7 @@ class TagDetailView(APIView):
             404: openapi.Response(description="Tag not found"),
             500: openapi.Response(description="Internal server error"),
         },
-        tags=['Tags']
+        tags=['tags']
     )
     def get(self, request, tag_id):
         try:
@@ -93,10 +85,8 @@ class TagDetailView(APIView):
         try:
             articles_page = paginator.page(page)
         except PageNotAnInteger:
-            logger.info(f"Page '{page}' is not an integer. Defaulting to page 1.")
             articles_page = paginator.page(1)
         except EmptyPage:
-            logger.info(f"Page '{page}' is out of range. Returning empty results.")
             return Response({
                 "count": paginator.count,
                 "next": None,
@@ -119,15 +109,7 @@ class TagDetailView(APIView):
             "results": serializer.data,
         }
 
-        logger.info(f"Returning page {page}. Total articles: {paginator.count}")
         return Response(response_data, status=status.HTTP_200_OK)
-
-
-
-
-
-
-
 
 class TagListView(APIView):
     @swagger_auto_schema(
@@ -145,7 +127,7 @@ class TagListView(APIView):
             ),
             500: openapi.Response(description="Internal server error"),
         },
-        tags=['Tags']
+        tags=['tags']
     )
     def get(self, request):
         tags = Tag.objects.annotate(article_count=Count("articles"))

@@ -29,7 +29,7 @@ class ArticleSerializer(serializers.ModelSerializer):
         fields = [
             "id", "title", "description", "content", "author", "publication_date",
             "formatted_publication_date", "theme", "tags", "categories",
-            "reading_time_minutes", "image_url", "visibility", "views_count",
+            "reading_time_minutes", "image_url", "visibility", "views_count", "like_count",
             "version", "slug", "read_time", "category", "previous_post", "next_post",
         ]
 

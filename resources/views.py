@@ -26,7 +26,7 @@ class ImageArticleListView(APIView):
             ),
             500: openapi.Response(description="Internal server error"),
         },
-        tags=['Resources']
+        tags=['resources']
     )
     def get(self, request):
         image_articles = ImageArticle.objects.all()
@@ -57,7 +57,7 @@ class ImageArticleDetailView(APIView):
             404: openapi.Response(description="Image Article not found"),
             500: openapi.Response(description="Internal server error"),
         },
-        tags=['Resources']
+        tags=['resources']
     )
     def get(self, request, image_article_id):
         try:
